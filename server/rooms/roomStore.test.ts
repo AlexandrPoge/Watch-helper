@@ -15,4 +15,13 @@ describe('roomStore', () => {
 
     expect(roomStore.join(room.id, 'макс').members).toHaveLength(2)
   })
+
+  it('выбирает лидера после первого голоса', () => {
+    const room = roomStore.create({ title: 'Выбор', mode: 'group', hostName: 'Аня' })
+    const votingRoom = roomStore.startVoting(room.id)
+
+    const updatedRoom = roomStore.vote(room.id, { memberId: room.members[0].id, movieId: votingRoom.candidates[1].id, value: 'up' })
+
+    expect(updatedRoom.winnerId).toBe(votingRoom.candidates[1].id)
+  })
 })

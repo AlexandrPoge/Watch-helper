@@ -12,6 +12,14 @@ export async function joinRoom(roomId: string, name: string) {
   return requestRoom(`/api/rooms/${roomId}/members`, { method: 'POST', body: JSON.stringify({ name }) })
 }
 
+export async function startVoting(roomId: string) {
+  return requestRoom(`/api/rooms/${roomId}/voting/start`, { method: 'POST' })
+}
+
+export async function voteForMovie(roomId: string, memberId: string, movieId: string, value: 'up' | 'skip') {
+  return requestRoom(`/api/rooms/${roomId}/votes`, { method: 'POST', body: JSON.stringify({ memberId, movieId, value }) })
+}
+
 async function requestRoom(path: string, options?: RequestInit) {
   const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } })
   const data = await response.json() as { room?: Room; message?: string }

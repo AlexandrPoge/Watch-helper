@@ -16,7 +16,7 @@ export function CreateRoomPage() {
   const [mode, setMode] = useState<RoomMode>('group')
   const [title, setTitle] = useState('Киновечер')
   const [hostName, setHostName] = useState('')
-  const create = useMutation({ mutationFn: createRoom, onSuccess: (room) => navigate(`/rooms/${room.id}`) })
+  const create = useMutation({ mutationFn: createRoom, onSuccess: (room) => navigate(`/rooms/${room.id}?member=${room.members[0].id}`) })
 
   return (
     <main className="min-h-screen bg-[#090914] text-white"><div className="aurora pointer-events-none fixed inset-0 -z-0 opacity-70" /><AppHeader />
