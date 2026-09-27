@@ -5,5 +5,6 @@ export type Movie = {
   duration: string
   match: number
   posterUrl: string
-  accent: string
+  accent?: string
+  sourceNames?: string[]
 }
