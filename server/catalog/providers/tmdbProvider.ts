@@ -19,13 +19,14 @@ type TmdbResponse = { results: TmdbResult[] }
 
 export const tmdbProvider: CatalogProvider = {
   name: 'TMDB',
-  isConfigured: Boolean(env.tmdbToken),
+  isConfigured: Boolean(env.tmdbApiKey),
   async search(query) {
-    if (!env.tmdbToken) return []
+    if (!env.tmdbApiKey) return []
     const url = new URL('https://api.themoviedb.org/3/search/multi')
     url.searchParams.set('query', query)
     url.searchParams.set('language', 'ru-RU')
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${env.tmdbToken}` } })
+    url.searchParams.set('api_key', env.tmdbApiKey)
+    const response = await fetch(url)
     if (!response.ok) throw new Error(`TMDB returned ${response.status}`)
     const data = await response.json() as TmdbResponse
     return data.results.filter((item) => item.media_type !== 'person').map(toCatalogItem)
