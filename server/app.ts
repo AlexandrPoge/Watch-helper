@@ -1,5 +1,7 @@
 import express from 'express'
 import { getCatalogStatus, searchCatalog } from './catalog/catalogService'
+import { getSeriesDetails } from './catalog/seriesDetailsService'
+import { browseSeries, type SeriesFilters } from './catalog/seriesService'
 import { roomRouter } from './rooms/roomRoutes'
 
 export const app = express()
@@ -24,4 +26,31 @@ app.get('/api/movies/search', async (request, response) => {
   }
 })
 
+app.get('/api/series', async (request, response) => {
+  const filters: SeriesFilters = {
+    genre: stringParam(request.query.genre), year: stringParam(request.query.year),
+    rating: stringParam(request.query.rating), sort: sortParam(request.query.sort),
+    page: Math.max(1, Number(request.query.page) || 1),
+  }
+  try {
+    return response.json({ items: await browseSeries(filters), page: filters.page })
+  } catch (error) {
+    console.error('Series catalog failed', error)
+    return response.status(502).json({ message: 'Series providers are temporarily unavailable.' })
+  }
+})
+
+app.get('/api/series/:catalogId', async (request, response) => {
+  try {
+    const item = await getSeriesDetails(request.params.catalogId)
+    return item ? response.json({ item }) : response.status(404).json({ message: 'Series not found.' })
+  } catch (error) {
+    console.error('Series details failed', error)
+    return response.status(502).json({ message: 'Series provider is temporarily unavailable.' })
+  }
+})
+
 app.use(roomRouter)
+
+const stringParam = (value: unknown) => typeof value === 'string' && value ? value : undefined
+const sortParam = (value: unknown): SeriesFilters['sort'] => ['popular', 'rating', 'newest'].includes(String(value)) ? value as SeriesFilters['sort'] : 'popular'

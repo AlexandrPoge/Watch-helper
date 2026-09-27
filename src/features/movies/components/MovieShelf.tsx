@@ -2,7 +2,7 @@ import { ArrowUpRight, Sparkles } from 'lucide-react'
 import type { Movie } from '../../../entities/movie/model'
 import { MovieCard } from './MovieCard'
 
-type MovieShelfProps = { movies: Movie[]; savedIds: number[]; onSave: (movieId: number) => void }
+type MovieShelfProps = { movies: Movie[]; savedIds: (string | number)[]; onSave: (movieId: string | number) => void }
 
 export function MovieShelf({ movies, savedIds, onSave }: MovieShelfProps) {
   return (

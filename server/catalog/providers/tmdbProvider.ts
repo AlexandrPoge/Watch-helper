@@ -12,6 +12,10 @@ type TmdbResult = {
   first_air_date?: string
   overview?: string
   poster_path?: string
+  backdrop_path?: string
+  vote_average?: number
+  vote_count?: number
+  genre_ids?: number[]
   popularity: number
 }
 
@@ -44,6 +48,9 @@ function toCatalogItem(item: TmdbResult): CatalogItem {
     year: date ? Number.parseInt(date, 10) : undefined,
     overview: item.overview,
     posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined,
+    backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined,
+    rating: item.vote_average,
+    voteCount: item.vote_count,
     match: Math.min(99, Math.max(50, Math.round(item.popularity))),
     sourceNames: ['TMDB'],
   }

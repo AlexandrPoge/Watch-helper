@@ -1,12 +1,12 @@
 import { Bookmark, Check, Plus } from 'lucide-react'
 import type { Movie } from '../../../entities/movie/model'
 
-type MovieCardProps = { movie: Movie; saved?: boolean; onSave: (movieId: number) => void }
+type MovieCardProps = { movie: Movie; saved?: boolean; onSave: (movieId: string | number) => void }
 
 export function MovieCard({ movie, saved, onSave }: MovieCardProps) {
   return (
     <article className="movie-card group relative min-w-42 overflow-hidden rounded-2xl bg-slate-900 sm:min-w-48">
-      <img alt={movie.title} className="aspect-[2/3] w-full object-cover" src={movie.posterUrl} />
+      {movie.posterUrl ? <img alt={movie.title} className="aspect-[2/3] w-full object-cover" src={movie.posterUrl} /> : <div className="aspect-[2/3] bg-gradient-to-br from-violet-900 to-slate-950" />}
       <div className={`absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t ${movie.accent ?? 'from-violet-400/70 to-slate-950/70'}`} />
       <div className="absolute inset-x-0 bottom-0 p-3.5">
         <div className="mb-1.5 flex items-end justify-between gap-2">

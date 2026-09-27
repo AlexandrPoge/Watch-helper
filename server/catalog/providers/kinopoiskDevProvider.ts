@@ -9,7 +9,10 @@ type KinopoiskMovie = {
   year?: number
   description?: string
   poster?: { url?: string }
+  backdrop?: { url?: string }
   rating?: { kp?: number }
+  votes?: { kp?: number }
+  genres?: { name: string }[]
 }
 
 type KinopoiskResponse = { docs: KinopoiskMovie[] }
@@ -39,6 +42,10 @@ function toCatalogItem(movie: KinopoiskMovie): CatalogItem {
     year: movie.year,
     overview: movie.description,
     posterUrl: movie.poster?.url,
+    backdropUrl: movie.backdrop?.url,
+    rating: movie.rating?.kp,
+    voteCount: movie.votes?.kp,
+    genres: movie.genres?.map(({ name }) => name),
     match: Math.round(Math.min(99, Math.max(50, (movie.rating?.kp ?? 5) * 10))),
     sourceNames: ['PoiskKino'],
   }

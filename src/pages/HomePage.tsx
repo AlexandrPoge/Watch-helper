@@ -10,14 +10,14 @@ import { TasteStats } from './components/TasteStats'
 
 export function HomePage() {
   const [query, setQuery] = useState('')
-  const [savedIds, setSavedIds] = useState<number[]>([])
+  const [savedIds, setSavedIds] = useState<(string | number)[]>([])
   const fallbackResults = useMemo(() => {
     const normalizedQuery = query.toLowerCase()
     return movies.filter((movie) => movie.title.toLowerCase().includes(normalizedQuery))
   }, [query])
   const catalogSearch = useCatalogSearch(query)
 
-  const toggleSaved = (movieId: number) => {
+  const toggleSaved = (movieId: string | number) => {
     setSavedIds((items) => items.includes(movieId) ? items.filter((id) => id !== movieId) : [...items, movieId])
   }
 
@@ -39,8 +39,8 @@ type SearchResultsProps = {
   results: typeof movies
   isLoading: boolean
   hasError: boolean
-  savedIds: number[]
-  onSave: (movieId: number) => void
+  savedIds: (string | number)[]
+  onSave: (movieId: string | number) => void
 }
 
 function SearchResults({ results, isLoading, hasError, savedIds, onSave }: SearchResultsProps) {

@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { HomePage } from '../pages/HomePage'
 import { CreateRoomPage } from '../pages/CreateRoomPage'
 import { RoomPage } from '../pages/RoomPage'
+import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
+import { SeriesPage } from '../pages/SeriesPage'
 
 const queryClient = new QueryClient()
 
@@ -10,6 +12,8 @@ export function App() {
   return (
     <BrowserRouter><QueryClientProvider client={queryClient}><Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/series" element={<SeriesPage />} />
+      <Route path="/series/:catalogId" element={<SeriesDetailsPage />} />
       <Route path="/rooms/new" element={<CreateRoomPage />} />
       <Route path="/rooms/:roomId" element={<RoomPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
