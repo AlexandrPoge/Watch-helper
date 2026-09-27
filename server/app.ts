@@ -1,7 +1,10 @@
 import express from 'express'
 import { getCatalogStatus, searchCatalog } from './catalog/catalogService'
+import { roomRouter } from './rooms/roomRoutes'
 
 export const app = express()
+
+app.use(express.json())
 
 app.get('/api/health', (_, response) => response.json({ status: 'ok' }))
 
@@ -20,3 +23,5 @@ app.get('/api/movies/search', async (request, response) => {
     return response.status(502).json({ message: 'Catalog providers are temporarily unavailable.' })
   }
 })
+
+app.use(roomRouter)
