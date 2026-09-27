@@ -1,10 +1,10 @@
 import { omdbProvider } from './providers/omdbProvider'
-import { kinopoiskDevProvider } from './providers/kinopoiskDevProvider'
+import { poiskKinoProvider } from './providers/kinopoiskDevProvider'
 import { tmdbProvider } from './providers/tmdbProvider'
 import { tvMazeProvider } from './providers/tvMazeProvider'
 import type { CatalogItem, CatalogProvider } from './types'
 
-const providers: CatalogProvider[] = [tmdbProvider, kinopoiskDevProvider, omdbProvider, tvMazeProvider]
+const providers: CatalogProvider[] = [tmdbProvider, poiskKinoProvider, omdbProvider, tvMazeProvider]
 
 export async function searchCatalog(query: string) {
   const settled = await Promise.allSettled(providers.map((provider) => provider.search(query)))

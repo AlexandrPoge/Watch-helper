@@ -14,16 +14,16 @@ type KinopoiskMovie = {
 
 type KinopoiskResponse = { docs: KinopoiskMovie[] }
 
-export const kinopoiskDevProvider: CatalogProvider = {
-  name: 'Kinopoisk.dev',
+export const poiskKinoProvider: CatalogProvider = {
+  name: 'PoiskKino',
   isConfigured: Boolean(env.kinopoiskDevToken),
   async search(query) {
     if (!env.kinopoiskDevToken) return []
-    const url = new URL('https://api.kinopoisk.dev/v1.4/movie')
+    const url = new URL('https://api.poiskkino.dev/v1.4/movie/search')
     url.searchParams.set('query', query)
     url.searchParams.set('limit', '20')
     const response = await fetch(url, { headers: { 'X-API-KEY': env.kinopoiskDevToken } })
-    if (!response.ok) throw new Error(`Kinopoisk.dev returned ${response.status}`)
+    if (!response.ok) throw new Error(`PoiskKino returned ${response.status}`)
     const data = await response.json() as KinopoiskResponse
     return data.docs.map(toCatalogItem)
   },
@@ -40,6 +40,6 @@ function toCatalogItem(movie: KinopoiskMovie): CatalogItem {
     overview: movie.description,
     posterUrl: movie.poster?.url,
     match: Math.round(Math.min(99, Math.max(50, (movie.rating?.kp ?? 5) * 10))),
-    sourceNames: ['Kinopoisk.dev'],
+    sourceNames: ['PoiskKino'],
   }
 }
