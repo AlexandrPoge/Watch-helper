@@ -14,3 +14,12 @@ body {
   margin: 0;
   min-width: 320px;
 }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+.aurora { background: radial-gradient(circle at 78% 8%, rgb(112 55 255 / 0.22), transparent 24rem), radial-gradient(circle at 12% 36%, rgb(217 70 239 / 0.12), transparent 25rem), radial-gradient(circle at 58% 90%, rgb(34 211 238 / 0.08), transparent 27rem); }
+.gradient-text { background: linear-gradient(90deg, #d8b4fe 5%, #a5b4fc 52%, #f0abfc 95%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.movie-card { box-shadow: 0 12px 25px rgb(0 0 0 / 0.22); transition: transform 180ms ease, box-shadow 180ms ease; }
+.movie-card:hover { box-shadow: 0 22px 42px rgb(0 0 0 / 0.42); transform: translateY(-5px); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
