@@ -23,7 +23,7 @@ export function VotingPanel({ room, memberId, isStarting, isVoting, onStart, onV
 }
 
 function StartVoting({ isStarting, onStart }: { isStarting: boolean; onStart: () => void }) {
-  return <section className="mt-5 rounded-3xl border border-dashed border-violet-300/30 bg-violet-400/8 p-6 text-center"><Play className="mx-auto text-violet-300" size={24} /><h2 className="mt-3 text-xl font-bold">Готовы искать общий фильм?</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">Запустим первый раунд — каждый оценит три варианта, а лидер определится автоматически.</p><button onClick={onStart} disabled={isStarting} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-bold hover:bg-violet-400 disabled:opacity-50">{isStarting ? 'Подбираем…' : 'Начать выбор'}</button></section>
+  return <section className="mt-5 rounded-3xl border border-dashed border-violet-300/30 bg-violet-400/8 p-6 text-center"><Play className="mx-auto text-violet-300" size={24} /><h2 className="mt-3 text-xl font-bold">Готовы искать общий фильм?</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">Запустим подборку — каждый оценит варианты, а лидер определится автоматически.</p><button onClick={onStart} disabled={isStarting} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-bold hover:bg-violet-400 disabled:opacity-50">{isStarting ? 'Подбираем…' : 'Начать выбор'}</button></section>
 }
 
 function VoteButton({ active, disabled, icon, label, onClick }: { active: boolean; disabled: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {

@@ -1,4 +1,4 @@
-import type { CatalogItem, CatalogProvider } from '../types'
+import type { CatalogProvider } from '../types'
 
 type TvMazeSearchResult = {
   score: number

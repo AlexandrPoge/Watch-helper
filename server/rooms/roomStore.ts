@@ -30,10 +30,11 @@ export const roomStore = {
     room.members.push(member)
     return room
   },
-  startVoting(roomId: string) {
+  startVoting(roomId: string, candidates: RoomMovie[] = roomCandidates) {
     const room = rooms.get(roomId)
     if (!room) throw new Error('ROOM_NOT_FOUND')
-    if (room.candidates.length === 0) room.candidates = roomCandidates
+    if (room.mode === 'couple' && room.members.length < 2) throw new Error('ROOM_WAITING_PARTNER')
+    if (room.candidates.length === 0) room.candidates = candidates.length ? candidates : roomCandidates
     return room
   },
   vote(roomId: string, vote: Vote) {
@@ -43,6 +44,7 @@ export const roomStore = {
     if (!room.candidates.some((movie) => movie.id === vote.movieId)) throw new Error('MOVIE_NOT_FOUND')
     room.votes = [...room.votes.filter((item) => item.memberId !== vote.memberId || item.movieId !== vote.movieId), vote]
     room.winnerId = pickWinner(room)
+    if (room.winnerId) room.completedAt = new Date().toISOString()
     return room
   },
 }
@@ -52,13 +54,17 @@ function getMemberLimit(mode: Room['mode']) {
 }
 
 function pickWinner(room: Room) {
+  if (room.mode === 'couple') {
+    return room.candidates.find((movie) => room.members.every((member) => room.votes.some((vote) => vote.memberId === member.id && vote.movieId === movie.id && vote.value === 'up')))?.id
+  }
   const scores = new Map(room.candidates.map((movie) => [movie.id, 0]))
   room.votes.filter((vote) => vote.value === 'up').forEach((vote) => scores.set(vote.movieId, (scores.get(vote.movieId) ?? 0) + 1))
-  return room.votes.length === 0 ? undefined : [...scores.entries()].sort((first, second) => second[1] - first[1])[0]?.[0]
+  const leader = [...scores.entries()].sort((first, second) => second[1] - first[1])[0]
+  return leader && leader[1] > 0 ? leader[0] : undefined
 }
 
 const roomCandidates: RoomMovie[] = [
-  { id: 'dune-2', title: 'Дюна: Часть вторая', year: 2024, posterUrl: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg' },
-  { id: 'poor-things', title: 'Бедные-несчастные', year: 2023, posterUrl: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg' },
-  { id: 'parasite', title: 'Паразиты', year: 2019, posterUrl: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
+  { id: 'tmdb:movie:693134', title: 'Дюна: Часть вторая', year: 2024, posterUrl: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg' },
+  { id: 'tmdb:movie:792307', title: 'Бедные-несчастные', year: 2023, posterUrl: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg' },
+  { id: 'tmdb:movie:496243', title: 'Паразиты', year: 2019, posterUrl: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
 ]

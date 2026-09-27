@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Heart, UsersRound } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { createRoom } from '../features/rooms/api/roomApi'
 import type { RoomMode } from '../entities/room/model'
 import { AppHeader } from './components/AppHeader'
@@ -13,7 +13,8 @@ const modes: { id: RoomMode; title: string; detail: string; icon: typeof Heart }
 
 export function CreateRoomPage() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<RoomMode>('group')
+  const [searchParams] = useSearchParams()
+  const [mode, setMode] = useState<RoomMode>(searchParams.get('mode') === 'couple' ? 'couple' : 'group')
   const [title, setTitle] = useState('Киновечер')
   const [hostName, setHostName] = useState('')
   const create = useMutation({ mutationFn: createRoom, onSuccess: (room) => navigate(`/rooms/${room.id}?member=${room.members[0].id}`) })

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { roomStore } from './roomStore'
 import type { CreateRoomInput, RoomMode, Vote } from './types'
+import { getVotingMovies } from '../catalog/randomMovieService'
 
 export const roomRouter = Router()
 
@@ -28,11 +29,14 @@ roomRouter.post('/api/rooms/:roomId/members', (request, response) => {
   }
 })
 
-roomRouter.post('/api/rooms/:roomId/voting/start', (request, response) => {
+roomRouter.post('/api/rooms/:roomId/voting/start', async (request, response) => {
   try {
-    return response.json({ room: roomStore.startVoting(request.params.roomId) })
-  } catch {
-    return response.status(404).json({ message: 'Room not found.' })
+    const items = await getVotingMovies(12)
+    const candidates = items.flatMap((item) => item.posterUrl ? [{ id: item.id, title: item.title, year: item.year ?? 0, posterUrl: item.posterUrl, rating: item.rating, overview: item.overview }] : [])
+    return response.json({ room: roomStore.startVoting(request.params.roomId, candidates) })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'UNKNOWN_ERROR'
+    return response.status(message === 'ROOM_WAITING_PARTNER' ? 409 : 404).json({ message })
   }
 })
 

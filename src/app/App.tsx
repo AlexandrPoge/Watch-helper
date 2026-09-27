@@ -5,6 +5,10 @@ import { CreateRoomPage } from '../pages/CreateRoomPage'
 import { RoomPage } from '../pages/RoomPage'
 import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
 import { SeriesPage } from '../pages/SeriesPage'
+import { MovieDetailsPage } from '../pages/MovieDetailsPage'
+import { PersonPage } from '../pages/PersonPage'
+import { ProfilePage } from '../pages/ProfilePage'
+import { RandomMoviePage } from '../pages/RandomMoviePage'
 
 const queryClient = new QueryClient()
 
@@ -14,6 +18,10 @@ export function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/series" element={<SeriesPage />} />
       <Route path="/series/:catalogId" element={<SeriesDetailsPage />} />
+      <Route path="/movies/:catalogId" element={<MovieDetailsPage />} />
+      <Route path="/people/:catalogId" element={<PersonPage />} />
+      <Route path="/random" element={<RandomMoviePage />} />
+      <Route path="/profile" element={<ProfilePage />} />
       <Route path="/rooms/new" element={<CreateRoomPage />} />
       <Route path="/rooms/:roomId" element={<RoomPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />

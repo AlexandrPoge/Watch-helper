@@ -1,5 +1,5 @@
 import { env } from '../../config/env'
-import type { CatalogItem, CatalogProvider } from '../types'
+import type { CatalogProvider } from '../types'
 
 type OmdbSearchItem = { imdbID: string; Title: string; Year: string; Type: 'movie' | 'series'; Poster: string }
 type OmdbResponse = { Response: 'True' | 'False'; Search?: OmdbSearchItem[] }

@@ -12,6 +12,8 @@ export type RoomMovie = {
   title: string
   year: number
   posterUrl: string
+  rating?: number
+  overview?: string
 }
 
 export type Vote = {
@@ -29,6 +31,7 @@ export type Room = {
   candidates: RoomMovie[]
   votes: Vote[]
   winnerId?: string
+  completedAt?: string
 }
 
 export type CreateRoomInput = {

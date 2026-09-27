@@ -28,6 +28,21 @@ export type SeriesDetails = CatalogItem & {
   similar: CatalogItem[]
 }
 
+export type PersonSummary = {
+  id: string
+  name: string
+  department?: string
+  photoUrl?: string
+  knownFor: string[]
+}
+
+export type PersonDetails = PersonSummary & {
+  biography?: string
+  birthday?: string
+  placeOfBirth?: string
+  credits: CatalogItem[]
+}
+
 export type CatalogProvider = {
   name: string
   isConfigured: boolean
