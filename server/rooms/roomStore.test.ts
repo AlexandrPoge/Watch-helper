@@ -21,13 +21,11 @@ describe('roomStore', () => {
     expect(roomStore.join(room.id, 'макс').members).toHaveLength(2)
   })
 
-  it('выбирает лидера группы после первого голоса', () => {
+  it('не выбирает лидера группы до завершения голосования', () => {
     const room = roomStore.create({ title: 'Выбор', mode: 'group', hostName: 'Аня' })
     const votingRoom = roomStore.startVoting(room.id)
-
     const updatedRoom = roomStore.vote(room.id, { memberId: room.members[0].id, movieId: votingRoom.candidates[1].id, value: 'up' })
-
-    expect(updatedRoom.winnerId).toBe(votingRoom.candidates[1].id)
+    expect(updatedRoom.winnerId).toBeUndefined()
   })
 
   it('не объявляет лидера группы после пропуска', () => {
@@ -44,5 +42,16 @@ describe('roomStore', () => {
     const movieId = votingRoom.candidates[0].id
     expect(roomStore.vote(room.id, { memberId: room.members[0].id, movieId, value: 'up' }).winnerId).toBeUndefined()
     expect(roomStore.vote(room.id, { memberId: joined.members[1].id, movieId, value: 'up' }).winnerId).toBe(movieId)
+  })
+
+  it('выбирает лидера после голосов всех участников по всем фильмам', () => {
+    const room = roomStore.create({ title: 'Компания', mode: 'group', hostName: 'Аня' })
+    const joined = roomStore.join(room.id, 'Макс')
+    const candidates = roomStore.startVoting(room.id, [
+      { id: 'one', title: 'Первый', year: 2025, posterUrl: 'poster' },
+      { id: 'two', title: 'Второй', year: 2024, posterUrl: 'poster' },
+    ]).candidates
+    for (const member of joined.members) for (const movie of candidates) roomStore.vote(room.id, { memberId: member.id, movieId: movie.id, value: movie.id === 'two' ? 'up' : 'skip' })
+    expect(roomStore.get(room.id)?.winnerId).toBe('two')
   })
 })

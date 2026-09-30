@@ -9,6 +9,7 @@ import { MovieDetailsPage } from '../pages/MovieDetailsPage'
 import { PersonPage } from '../pages/PersonPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { RandomMoviePage } from '../pages/RandomMoviePage'
+import { MobileNav } from '../pages/components/MobileNav'
 
 const queryClient = new QueryClient()
 
@@ -25,6 +26,6 @@ export function App() {
       <Route path="/rooms/new" element={<CreateRoomPage />} />
       <Route path="/rooms/:roomId" element={<RoomPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes></QueryClientProvider></BrowserRouter>
+    </Routes><MobileNav /></QueryClientProvider></BrowserRouter>
   )
 }

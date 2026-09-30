@@ -23,3 +23,4 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .movie-card { box-shadow: 0 12px 25px rgb(0 0 0 / 0.22); transition: transform 180ms ease, box-shadow 180ms ease; }
 .movie-card:hover { box-shadow: 0 22px 42px rgb(0 0 0 / 0.42); transform: translateY(-5px); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+@media (max-width: 767px) { body { padding-bottom: 5.5rem; } }

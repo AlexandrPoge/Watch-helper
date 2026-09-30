@@ -64,6 +64,8 @@ function pickWinner(room: Room) {
   if (room.mode === 'couple') {
     return room.candidates.find((movie) => room.members.every((member) => room.votes.some((vote) => vote.memberId === member.id && vote.movieId === movie.id && vote.value === 'up')))?.id
   }
+  const finished = room.members.every((member) => room.candidates.every((movie) => room.votes.some((vote) => vote.memberId === member.id && vote.movieId === movie.id)))
+  if (!finished) return undefined
   const scores = new Map(room.candidates.map((movie) => [movie.id, 0]))
   room.votes.filter((vote) => vote.value === 'up').forEach((vote) => scores.set(vote.movieId, (scores.get(vote.movieId) ?? 0) + 1))
   const leader = [...scores.entries()].sort((first, second) => second[1] - first[1])[0]
