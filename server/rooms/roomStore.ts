@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import type { CreateRoomInput, Room, RoomMember, RoomMovie, Vote } from './types'
 
 const rooms = new Map<string, Room>()
@@ -7,7 +7,7 @@ export const roomStore = {
   create(input: CreateRoomInput) {
     const now = new Date().toISOString()
     const room: Room = {
-      id: randomUUID(),
+      id: createRoomId(),
       title: input.title,
       mode: input.mode,
       createdAt: now,
@@ -47,6 +47,13 @@ export const roomStore = {
     if (room.winnerId) room.completedAt = new Date().toISOString()
     return room
   },
+}
+
+function createRoomId() {
+  let id = ''
+  do id = randomBytes(5).toString('hex').slice(0, 8).toUpperCase()
+  while (rooms.has(id))
+  return id
 }
 
 function getMemberLimit(mode: Room['mode']) {

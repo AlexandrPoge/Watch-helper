@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { roomStore } from './roomStore'
 
 describe('roomStore', () => {
+  it('создаёт короткий код комнаты', () => {
+    const room = roomStore.create({ title: 'Кино', mode: 'group', hostName: 'Аня' })
+    expect(room.id).toMatch(/^[A-F0-9]{8}$/)
+  })
+
   it('ограничивает комнату для пары двумя участниками', () => {
     const room = roomStore.create({ title: 'Кино на вечер', mode: 'couple', hostName: 'Аня' })
     roomStore.join(room.id, 'Макс')
