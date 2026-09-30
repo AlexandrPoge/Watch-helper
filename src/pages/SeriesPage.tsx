@@ -1,15 +1,18 @@
 import { Sparkles, Tv } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { SeriesFilters } from '../features/series/components/SeriesFilters'
 import { SeriesGrid } from '../features/series/components/SeriesGrid'
-import { defaultSeriesFilters, type SeriesFilters as Filters } from '../features/series/model'
+import type { SeriesFilters as Filters } from '../features/series/model'
 import { useSeries } from '../features/series/useSeries'
 import { AppHeader } from './components/AppHeader'
 import { useWatchlist } from '../features/library/useWatchlist'
+import { readSeriesFilters, writeSeriesParams } from '../features/series/filterParams'
 
 export function SeriesPage() {
-  const [filters, setFilters] = useState<Filters>(defaultSeriesFilters)
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = readSeriesFilters(searchParams)
+  const search = searchParams.get('q') ?? ''
   const watchlist = useWatchlist()
   const catalog = useSeries(filters)
   const items = useMemo(() => {
@@ -17,6 +20,8 @@ export function SeriesPage() {
     const allItems = catalog.data?.pages.flatMap((page) => page.items) ?? []
     return query ? allItems.filter((item) => `${item.title} ${item.originalTitle ?? ''}`.toLocaleLowerCase().includes(query)) : allItems
   }, [catalog.data, search])
+  const setFilters = (next: Filters) => setSearchParams(writeSeriesParams(next, search), { replace: true })
+  const setSearch = (next: string) => setSearchParams(writeSeriesParams(filters, next), { replace: true })
 
   return (
     <main className="min-h-screen bg-[#090914] text-white">
