@@ -1,6 +1,7 @@
 import { Bookmark, ImageOff, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Movie } from '../../../entities/movie/model'
+import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
 type Props = { item: Movie; saved: boolean; onSave: (id: string | number) => void }
 
@@ -9,7 +10,7 @@ export function SeriesCard({ item, saved, onSave }: Props) {
     <article className="group relative min-w-0">
       <Link to={`/series/${encodeURIComponent(String(item.id))}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
         <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-gradient-to-br from-violet-950 to-slate-950 shadow-xl shadow-black/20">
-          {item.posterUrl ? <img src={item.posterUrl} alt={item.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-slate-600"><ImageOff size={30} /></div>}
+          {item.posterUrl ? <img src={mediaUrl(item.posterUrl)} alt={item.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-slate-600"><ImageOff size={30} /></div>}
           <div className="absolute inset-0 bg-gradient-to-t from-[#080810] via-transparent to-transparent opacity-90" />
           <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[#11111d]/90 px-2 py-1 text-xs font-black text-amber-300 backdrop-blur"><Star size={12} fill="currentColor" />{item.rating?.toFixed(1) ?? '—'}</span>
           <span className="absolute bottom-3 right-3 rounded-lg bg-white/12 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">сериал</span>

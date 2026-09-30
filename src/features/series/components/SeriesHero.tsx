@@ -2,12 +2,13 @@ import { Bookmark, CirclePlay, Clock3, Star, Tv2 } from 'lucide-react'
 import { useState } from 'react'
 import type { SeriesDetails } from '../../../entities/movie/model'
 import { ExpandableText } from '../../../shared/ui/ExpandableText'
+import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
 export function SeriesHero({ item }: { item: SeriesDetails }) {
   const [saved, setSaved] = useState(false)
   return (
     <section className="relative isolate min-h-[660px] overflow-hidden border-b border-white/8">
-      {item.backdropUrl && <img src={item.backdropUrl} alt="" className="absolute inset-0 -z-30 h-full w-full object-cover object-center" />}
+      {item.backdropUrl && <img src={mediaUrl(item.backdropUrl)} alt="" className="absolute inset-0 -z-30 h-full w-full object-cover object-center" />}
       <div className="absolute inset-0 -z-20 bg-gradient-to-r from-[#090914] via-[#090914]/85 to-[#090914]/20" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#090914] via-transparent to-[#090914]/45" />
       <div className="mx-auto flex min-h-[660px] max-w-7xl items-end px-5 pb-16 pt-28 lg:px-8">

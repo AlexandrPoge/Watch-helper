@@ -1,5 +1,6 @@
 import { Check, Heart, Play, X } from 'lucide-react'
 import type { Room } from '../../../entities/room/model'
+import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
 type VotingPanelProps = {
   room: Room
@@ -17,7 +18,7 @@ export function VotingPanel({ room, memberId, isStarting, isVoting, onStart, onV
   return (
     <section className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-300">Совместный выбор</p><h2 className="mt-1 text-xl font-bold">Оцени варианты</h2></div>{winner && <span className="rounded-full bg-emerald-300 px-3 py-1 text-xs font-black text-emerald-950">Лидер: {winner.title}</span>}</div>
       {!memberId && <p className="mt-4 rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">Войди в комнату, чтобы голосовать.</p>}
-      <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">{room.candidates.map((movie) => <article key={movie.id} className="relative min-w-42 overflow-hidden rounded-2xl bg-slate-950 sm:min-w-48"><img alt={movie.title} className="aspect-[2/3] w-full object-cover opacity-80" src={movie.posterUrl} /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3"><p className="text-sm font-bold">{movie.title}</p><p className="text-xs text-slate-400">{movie.year}</p><div className="mt-3 flex gap-2"><VoteButton active={myVotes.get(movie.id) === 'up'} disabled={!memberId || isVoting} icon={<Heart size={15} />} label="Нравится" onClick={() => onVote(movie.id, 'up')} /><VoteButton active={myVotes.get(movie.id) === 'skip'} disabled={!memberId || isVoting} icon={<X size={15} />} label="Пропустить" onClick={() => onVote(movie.id, 'skip')} /></div></div></article>)}</div>
+      <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">{room.candidates.map((movie) => <article key={movie.id} className="relative min-w-42 overflow-hidden rounded-2xl bg-slate-950 sm:min-w-48"><img alt={movie.title} className="aspect-[2/3] w-full object-cover opacity-80" src={mediaUrl(movie.posterUrl)} /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3"><p className="text-sm font-bold">{movie.title}</p><p className="text-xs text-slate-400">{movie.year}</p><div className="mt-3 flex gap-2"><VoteButton active={myVotes.get(movie.id) === 'up'} disabled={!memberId || isVoting} icon={<Heart size={15} />} label="Нравится" onClick={() => onVote(movie.id, 'up')} /><VoteButton active={myVotes.get(movie.id) === 'skip'} disabled={!memberId || isVoting} icon={<X size={15} />} label="Пропустить" onClick={() => onVote(movie.id, 'skip')} /></div></div></article>)}</div>
     </section>
   )
 }
