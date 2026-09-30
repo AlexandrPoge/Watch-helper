@@ -5,6 +5,7 @@ import { browseSeries, type SeriesFilters } from './catalog/seriesService'
 import { getMovieDetails } from './catalog/movieDetailsService'
 import { getPersonDetails, searchPeople } from './catalog/peopleService'
 import { getRandomMovie } from './catalog/randomMovieService'
+import { networkRouter } from './network/networkRoutes'
 import { roomRouter } from './rooms/roomRoutes'
 
 export const app = express()
@@ -95,6 +96,7 @@ app.get('/api/people/:catalogId', async (request, response) => {
 })
 
 app.use(roomRouter)
+app.use(networkRouter)
 
 const stringParam = (value: unknown) => typeof value === 'string' && value ? value : undefined
 const sortParam = (value: unknown): SeriesFilters['sort'] => ['popular', 'rating', 'newest'].includes(String(value)) ? value as SeriesFilters['sort'] : 'popular'

@@ -24,9 +24,14 @@ export type SeriesDetails = CatalogItem & {
   country?: string
   ageRating?: string
   trailerUrl?: string
+  watchOptions: WatchOption[]
+  externalLinks: ExternalLink[]
   cast: { id: string; name: string; character?: string; photoUrl?: string }[]
   similar: CatalogItem[]
 }
+
+export type WatchOption = { name: string; type: 'stream' | 'free' | 'rent' | 'buy'; logoUrl?: string; url: string; region?: string }
+export type ExternalLink = { name: string; url: string }
 
 export type PersonSummary = {
   id: string

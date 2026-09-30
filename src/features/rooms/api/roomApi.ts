@@ -20,6 +20,12 @@ export async function voteForMovie(roomId: string, memberId: string, movieId: st
   return requestRoom(`/api/rooms/${roomId}/votes`, { method: 'POST', body: JSON.stringify({ memberId, movieId, value }) })
 }
 
+export async function getShareInfo() {
+  const response = await fetch('/api/network/share')
+  if (!response.ok) throw new Error('Не удалось определить адрес для приглашения.')
+  return response.json() as Promise<{ urls: string[]; scope: 'public' | 'local-network' }>
+}
+
 async function requestRoom(path: string, options?: RequestInit) {
   const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } })
   const data = await response.json() as { room?: Room; message?: string }

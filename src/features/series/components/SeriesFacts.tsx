@@ -18,4 +18,4 @@ export function SeriesFacts({ item }: { item: SeriesDetails }) {
 }
 
 const compact = (value: number) => new Intl.NumberFormat('ru', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
-const translateStatus = (status?: string) => ({ Returning: 'Продолжается', 'Returning Series': 'Продолжается', Ended: 'Завершён', Planned: 'Запланирован', Pilot: 'Пилот' }[status ?? ''] ?? status)
+const translateStatus = (status?: string) => ({ Returning: 'Продолжается', 'Returning Series': 'Продолжается', Ended: 'Завершён', Released: 'Выпущен', Planned: 'Запланирован', Pilot: 'Пилот' }[status ?? ''] ?? status)
