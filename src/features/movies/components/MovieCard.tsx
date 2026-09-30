@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Movie } from '../../../entities/movie/model'
 import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
-type MovieCardProps = { movie: Movie; saved?: boolean; onSave: (movieId: string | number) => void }
+type MovieCardProps = { movie: Movie; saved?: boolean; onSave: (movie: Movie) => void }
 
 export function MovieCard({ movie, saved, onSave }: MovieCardProps) {
   const path = `/${movie.kind === 'series' ? 'series' : 'movies'}/${encodeURIComponent(String(movie.id))}`
@@ -20,7 +20,7 @@ export function MovieCard({ movie, saved, onSave }: MovieCardProps) {
         <Link className="pointer-events-auto line-clamp-2 text-sm font-bold leading-tight text-white hover:text-violet-200" to={path}>{movie.title}</Link>
         <p className="mt-1 text-xs text-white/65">{movie.sourceNames?.join(' · ') ?? `${movie.year} · ${movie.duration}`}</p>
       </div>
-      <button aria-label={`Сохранить ${movie.title}`} className="absolute bottom-11 right-3.5 z-10 grid size-8 place-items-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white hover:text-slate-950" onClick={() => onSave(movie.id)}>{saved ? <Check size={15} /> : <Plus size={16} />}</button>
+      <button aria-label={`${saved ? 'Удалить' : 'Сохранить'} ${movie.title}`} className="absolute bottom-11 right-3.5 z-10 grid size-8 place-items-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white hover:text-slate-950" onClick={() => onSave(movie)}>{saved ? <Check size={15} /> : <Plus size={16} />}</button>
       {saved && <Bookmark className="absolute right-3 top-3 fill-violet-300 text-violet-300" size={18} />}
     </article>
   )

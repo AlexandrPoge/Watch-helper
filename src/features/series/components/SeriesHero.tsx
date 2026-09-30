@@ -1,11 +1,12 @@
 import { Bookmark, CirclePlay, Clock3, Star, Tv2 } from 'lucide-react'
-import { useState } from 'react'
 import type { SeriesDetails } from '../../../entities/movie/model'
 import { ExpandableText } from '../../../shared/ui/ExpandableText'
 import { mediaUrl } from '../../../shared/lib/mediaUrl'
+import { useWatchlist } from '../../library/useWatchlist'
 
 export function SeriesHero({ item }: { item: SeriesDetails }) {
-  const [saved, setSaved] = useState(false)
+  const watchlist = useWatchlist()
+  const saved = watchlist.has(item.id)
   return (
     <section className="relative isolate min-h-[660px] overflow-hidden border-b border-white/8">
       {item.backdropUrl && <img src={mediaUrl(item.backdropUrl)} alt="" className="absolute inset-0 -z-30 h-full w-full object-cover object-center" />}
@@ -18,7 +19,7 @@ export function SeriesHero({ item }: { item: SeriesDetails }) {
           {item.originalTitle && item.originalTitle !== item.title && <p className="mt-3 text-lg font-medium text-slate-400">{item.originalTitle}</p>}
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">{item.seasons && <span className="flex items-center gap-2"><Tv2 size={17} className="text-violet-300" />{item.seasons} сезонов</span>}{item.episodes && <span>{item.episodes} эпизодов</span>}{item.duration && <span className="flex items-center gap-2"><Clock3 size={16} />{item.duration}{item.kind === 'series' ? ' серия' : ''}</span>}</div>
           <ExpandableText text={item.overview || 'Описание пока не добавлено.'} className="mt-6 max-w-2xl text-base leading-7 text-slate-200 sm:text-lg" lines={4} />
-          <div className="mt-8 flex flex-wrap gap-3">{item.trailerUrl && <a href={item.trailerUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-violet-200"><CirclePlay size={19} />Смотреть трейлер</a>}<button onClick={() => setSaved(!saved)} className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition ${saved ? 'border-violet-300 bg-violet-400 text-slate-950' : 'border-white/20 bg-black/25 hover:bg-white/10'}`}><Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />{saved ? 'В моём списке' : 'Добавить в список'}</button></div>
+          <div className="mt-8 flex flex-wrap gap-3">{item.trailerUrl && <a href={item.trailerUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-violet-200"><CirclePlay size={19} />Смотреть трейлер</a>}<button onClick={() => watchlist.toggle(item)} className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition ${saved ? 'border-violet-300 bg-violet-400 text-slate-950' : 'border-white/20 bg-black/25 hover:bg-white/10'}`}><Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />{saved ? 'В моём списке' : 'Добавить в список'}</button></div>
         </div>
       </div>
     </section>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Movie } from '../../../entities/movie/model'
 import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
-type Props = { item: Movie; saved: boolean; onSave: (id: string | number) => void }
+type Props = { item: Movie; saved: boolean; onSave: (item: Movie) => void }
 
 export function SeriesCard({ item, saved, onSave }: Props) {
   return (
@@ -18,7 +18,7 @@ export function SeriesCard({ item, saved, onSave }: Props) {
         <h2 className="mt-3 line-clamp-1 font-bold text-white transition group-hover:text-violet-300">{item.title}</h2>
         <p className="mt-1 flex items-center gap-2 text-xs text-slate-500"><span>{item.year ?? 'Год неизвестен'}</span><span>•</span><span className="truncate">{item.genres?.slice(0, 2).join(', ') || item.sourceNames?.join(' · ')}</span></p>
       </Link>
-      <button aria-label={saved ? 'Убрать из списка' : 'Добавить в список'} onClick={() => onSave(item.id)} className={`absolute right-2.5 top-2.5 grid size-9 place-items-center rounded-xl border backdrop-blur transition ${saved ? 'border-violet-300/50 bg-violet-400 text-slate-950' : 'border-white/15 bg-black/45 text-white hover:bg-white hover:text-slate-950'}`}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'} /></button>
+      <button aria-label={saved ? 'Убрать из списка' : 'Добавить в список'} onClick={() => onSave(item)} className={`absolute right-2.5 top-2.5 grid size-9 place-items-center rounded-xl border backdrop-blur transition ${saved ? 'border-violet-300/50 bg-violet-400 text-slate-950' : 'border-white/15 bg-black/45 text-white hover:bg-white hover:text-slate-950'}`}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'} /></button>
     </article>
   )
 }

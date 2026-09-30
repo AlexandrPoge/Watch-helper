@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Movie } from '../../../entities/movie/model'
 import { MovieCard } from './MovieCard'
 
-type MovieShelfProps = { movies: Movie[]; savedIds: (string | number)[]; onSave: (movieId: string | number) => void }
+type MovieShelfProps = { movies: Movie[]; savedIds: (string | number)[]; onSave: (movie: Movie) => void }
 
 export function MovieShelf({ movies, savedIds, onSave }: MovieShelfProps) {
   return (
