@@ -7,7 +7,7 @@ type Props = { item: Movie; saved: boolean; onSave: (item: Movie) => void }
 
 export function SeriesCard({ item, saved, onSave }: Props) {
   return (
-    <article className="group relative min-w-0">
+    <article className="tech-card group relative min-w-0 rounded-2xl">
       <Link to={`/series/${encodeURIComponent(String(item.id))}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
         <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-gradient-to-br from-violet-950 to-slate-950 shadow-xl shadow-black/20">
           {item.posterUrl ? <img src={mediaUrl(item.posterUrl)} alt={item.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-slate-600"><ImageOff size={30} /></div>}

@@ -16,6 +16,6 @@ export function SeriesDetailsPage() {
   if (details.isError || !details.data) return <main className="grid min-h-screen place-items-center bg-[#090914] px-5 text-center text-white"><div><p className="text-5xl">🍿</p><h1 className="mt-5 text-2xl font-black">Не удалось открыть сериал</h1><p className="mt-2 text-sm text-slate-500">Источник временно недоступен или запись была удалена.</p><Link to="/series" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-500 px-5 py-3 text-sm font-bold"><ArrowLeft size={17} />Назад к сериалам</Link></div></main>
   const item = details.data
   return (
-    <main className="min-h-screen bg-[#090914] text-white"><AppHeader /><SeriesHero item={item} /><div className="mx-auto grid max-w-7xl gap-12 px-5 py-12 lg:px-8"><RecommendationReason movie={item} /><SeriesFacts item={item} /><WatchOptions item={item} /><SeriesCast cast={item.cast} /><SimilarSeries items={item.similar} /></div></main>
+    <main className="min-h-screen bg-[#090914] text-white"><AppHeader /><SeriesHero item={item} /><div className="details-stack mx-auto grid max-w-7xl gap-12 px-5 py-12 lg:px-8"><RecommendationReason movie={item} /><SeriesFacts item={item} /><WatchOptions item={item} /><SeriesCast cast={item.cast} /><SimilarSeries items={item.similar} /></div></main>
   )
 }
