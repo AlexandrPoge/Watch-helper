@@ -7,13 +7,13 @@ export function AppHeader() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   return (
     <header className="tech-header sticky top-0 z-30 border-b border-white/7 bg-[#090914]/70 backdrop-blur-2xl">
-      <nav className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-18 sm:px-6 xl:px-8">
         <Logo />
-        <div className="hidden items-center gap-7 text-sm font-medium text-slate-400 md:flex"><HeaderLink to="/">Для тебя</HeaderLink><HeaderLink to="/series">Сериалы</HeaderLink><HeaderLink to="/random">Случайный выбор</HeaderLink><HeaderLink to="/rooms/new">Комнаты</HeaderLink><HeaderLink to="/profile">Профиль</HeaderLink></div>
+        <div className="hidden items-center gap-5 text-sm font-medium text-slate-400 xl:flex"><HeaderLink to="/">Для тебя</HeaderLink><HeaderLink to="/series">Сериалы</HeaderLink><HeaderLink to="/random">Случайный выбор</HeaderLink><HeaderLink to="/rooms/new">Комнаты</HeaderLink><HeaderLink to="/profile">Профиль</HeaderLink></div>
         <div className="flex items-center gap-2">
-          <Link className="interactive-control hidden rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-bold shadow-lg shadow-violet-500/20 hover:bg-violet-400 sm:block" to="/rooms/new">Создать комнату</Link>
+          <Link className="interactive-control hidden rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-bold shadow-lg shadow-violet-500/20 hover:bg-violet-400 lg:block" to="/rooms/new">Создать комнату</Link>
           <button onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Уведомления" className="interactive-control grid size-10 place-items-center rounded-xl text-slate-300 hover:bg-white/8"><Bell size={19} /></button>
-          <Link to="/profile" className="hidden items-center gap-2 rounded-xl p-1 pr-2 text-sm font-medium hover:bg-white/8 sm:flex"><span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-amber-300 to-rose-500 text-xs font-black text-slate-950">АП</span><ChevronDown size={15} /></Link>
+          <Link to="/profile" aria-label="Открыть профиль" className="hidden items-center gap-2 rounded-xl p-1 pr-2 text-sm font-medium hover:bg-white/8 sm:flex"><span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-amber-300 to-rose-500 text-xs font-black text-slate-950">АП</span><ChevronDown className="hidden lg:block" size={15} /></Link>
         </div>
         {notificationsOpen && <div className="tech-panel absolute right-5 top-16 w-72 rounded-2xl border border-white/10 bg-[#171725]/95 p-4 shadow-2xl"><p className="font-bold">Уведомления</p><p className="mt-2 text-sm leading-5 text-slate-400">Здесь появятся совпадения в комнатах и новые рекомендации.</p></div>}
       </nav>

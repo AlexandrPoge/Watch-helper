@@ -30,7 +30,7 @@ export function HomePage() {
     <main id="top" className="min-h-screen overflow-hidden bg-[#090914] text-white">
       <div className="aurora pointer-events-none fixed inset-0 -z-0 opacity-70" />
       <AppHeader />
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 xl:px-8 xl:pb-16">
         <DiscoveryHero query={query} onQueryChange={setQuery} />
         {query ? <SearchResults results={catalogSearch.data ?? fallbackResults} people={peopleSearch.data ?? []} isLoading={catalogSearch.isLoading || peopleSearch.isLoading} hasError={catalogSearch.isError} savedIds={watchlist.ids} onSave={watchlist.toggle} /> : <MovieShelf movies={recommendations} savedIds={watchlist.ids} onSave={watchlist.toggle} personalized={taste.genres.length > 0 || taste.reactions.length > 0} />}
         <RoomCard />

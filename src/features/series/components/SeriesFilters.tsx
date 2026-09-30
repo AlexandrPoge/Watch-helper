@@ -13,7 +13,7 @@ export function SeriesFilters({ filters, search, onChange, onSearch, onReset }: 
   const update = (key: keyof Filters, value: string) => onChange({ ...filters, [key]: value })
   const activeCount = [filters.genre, filters.year, filters.rating].filter(Boolean).length
   return (
-    <section className="tech-panel relative z-20 -mx-5 border-y border-white/8 bg-[#0c0c18]/92 px-5 py-5 shadow-2xl shadow-black/15 lg:-mx-8 lg:px-8">
+    <section className="tech-panel relative z-20 rounded-3xl border border-white/8 bg-[#0c0c18]/92 p-4 shadow-2xl shadow-black/15 sm:p-5">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="relative block flex-1 lg:max-w-lg"><Search className="absolute left-4 top-3.5 text-slate-500" size={18} /><input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Название сериала…" className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-11 pr-11 text-sm outline-none transition focus:border-violet-400/60 focus:bg-white/8" />{search && <button type="button" onClick={() => onSearch('')} aria-label="Очистить поиск" className="absolute right-2 top-2 grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-white/8 hover:text-white"><X size={16} /></button>}</label>
