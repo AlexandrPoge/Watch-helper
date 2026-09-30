@@ -1,12 +1,14 @@
 import { UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTasteProfile } from '../../features/taste/useTasteProfile'
 
 type TasteStatsProps = { savedCount: number }
 
 export function TasteStats({ savedCount }: TasteStatsProps) {
+  const taste = useTasteProfile()
   const metrics = [
-    ['Оценено фильмов', '27', '+5 за неделю'],
-    ['Твой любимый жанр', 'Sci-fi', '42% совпадений'],
+    ['Понравилось', String(taste.likes.length).padStart(2, '0'), 'Учит рекомендации'],
+    ['Любимые жанры', String(taste.genres.length).padStart(2, '0'), taste.genres.slice(0, 2).join(' · ') || 'Настрой в профиле'],
     ['В списке на потом', String(savedCount).padStart(2, '0'), 'Не потеряй их'],
   ]
   return (

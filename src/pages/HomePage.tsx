@@ -7,6 +7,8 @@ import { useCatalogSearch } from '../features/search/model/useCatalogSearch'
 import { useWatchlist } from '../features/library/useWatchlist'
 import { SearchResults } from '../features/search/components/SearchResults'
 import { useDebouncedValue } from '../shared/lib/useDebouncedValue'
+import { useTasteProfile } from '../features/taste/useTasteProfile'
+import { recommendMovies } from '../features/taste/recommendMovies'
 import { AppHeader } from './components/AppHeader'
 import { DiscoveryHero } from './components/DiscoveryHero'
 import { TasteStats } from './components/TasteStats'
@@ -15,6 +17,8 @@ export function HomePage() {
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query)
   const watchlist = useWatchlist()
+  const taste = useTasteProfile()
+  const recommendations = useMemo(() => recommendMovies(movies, taste.genres, taste.reactions), [taste.genres, taste.reactions])
   const fallbackResults = useMemo(() => {
     const normalizedQuery = debouncedQuery.toLowerCase()
     return movies.filter((movie) => movie.title.toLowerCase().includes(normalizedQuery))
@@ -28,7 +32,7 @@ export function HomePage() {
       <AppHeader />
       <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 lg:px-8">
         <DiscoveryHero query={query} onQueryChange={setQuery} />
-        {query ? <SearchResults results={catalogSearch.data ?? fallbackResults} people={peopleSearch.data ?? []} isLoading={catalogSearch.isLoading || peopleSearch.isLoading} hasError={catalogSearch.isError} savedIds={watchlist.ids} onSave={watchlist.toggle} /> : <MovieShelf movies={movies} savedIds={watchlist.ids} onSave={watchlist.toggle} />}
+        {query ? <SearchResults results={catalogSearch.data ?? fallbackResults} people={peopleSearch.data ?? []} isLoading={catalogSearch.isLoading || peopleSearch.isLoading} hasError={catalogSearch.isError} savedIds={watchlist.ids} onSave={watchlist.toggle} /> : <MovieShelf movies={recommendations} savedIds={watchlist.ids} onSave={watchlist.toggle} personalized={taste.genres.length > 0 || taste.reactions.length > 0} />}
         <RoomCard />
         <TasteStats savedCount={watchlist.items.length} />
       </div>
