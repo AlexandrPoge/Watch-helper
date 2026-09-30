@@ -8,10 +8,12 @@ import { getRandomMovie } from './catalog/randomMovieService'
 import { networkRouter } from './network/networkRoutes'
 import { imageProxyRouter } from './media/imageProxyRoutes'
 import { roomRouter } from './rooms/roomRoutes'
+import { catalogCache } from './cache/catalogCache'
 
 export const app = express()
 
 app.use(express.json())
+app.use(catalogCache)
 
 app.get('/api/health', (_, response) => response.json({ status: 'ok' }))
 
