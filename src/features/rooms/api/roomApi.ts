@@ -1,24 +1,13 @@
-import type { CreateRoomInput, Room } from '../../../entities/room/model'
+import type { CreateRoomInput, Mood, Room, VoteValue } from '../../../entities/room/model'
 
-export async function createRoom(input: CreateRoomInput) {
-  return requestRoom('/api/rooms', { method: 'POST', body: JSON.stringify(input) })
-}
-
-export async function getRoom(roomId: string) {
-  return requestRoom(`/api/rooms/${roomId}`)
-}
-
-export async function joinRoom(roomId: string, name: string) {
-  return requestRoom(`/api/rooms/${roomId}/members`, { method: 'POST', body: JSON.stringify({ name }) })
-}
-
-export async function startVoting(roomId: string) {
-  return requestRoom(`/api/rooms/${roomId}/voting/start`, { method: 'POST' })
-}
-
-export async function voteForMovie(roomId: string, memberId: string, movieId: string, value: 'up' | 'skip') {
-  return requestRoom(`/api/rooms/${roomId}/votes`, { method: 'POST', body: JSON.stringify({ memberId, movieId, value }) })
-}
+export const createRoom = (input: CreateRoomInput) => requestRoom('/api/rooms', { method: 'POST', body: JSON.stringify(input) })
+export const getRoom = (id: string) => requestRoom(`/api/rooms/${id}`)
+export const joinRoom = (id: string, name: string) => requestRoom(`/api/rooms/${id}/join`, { method: 'POST', body: JSON.stringify({ name }) })
+export const startRound = (id: string, mood: Mood) => requestRoom(`/api/rooms/${id}/rounds`, { method: 'POST', body: JSON.stringify(mood) })
+export const cancelRound = (id: string) => requestRoom(`/api/rooms/${id}/rounds/current`, { method: 'DELETE' })
+export const closeRoom = (id: string) => requestRoom(`/api/rooms/${id}/close`, { method: 'POST' })
+export const removeMember = (id: string, memberId: string) => requestRoom(`/api/rooms/${id}/members/${memberId}`, { method: 'DELETE' })
+export const voteForMovie = (id: string, movieId: string, value: VoteValue) => requestRoom(`/api/rooms/${id}/votes`, { method: 'POST', body: JSON.stringify({ movieId, value }) })
 
 export async function getShareInfo() {
   const response = await fetch('/api/network/share')
@@ -26,8 +15,8 @@ export async function getShareInfo() {
   return response.json() as Promise<{ urls: string[]; scope: 'public' | 'local-network' }>
 }
 
-async function requestRoom(path: string, options?: RequestInit) {
-  const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } })
+async function requestRoom(path: string, options?: RequestInit): Promise<Room> {
+  const response = await fetch(path, { ...options, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...options?.headers } })
   const data = await response.json() as { room?: Room; message?: string }
   if (!response.ok || !data.room) throw new Error(data.message ?? 'Не удалось обновить комнату.')
   return data.room

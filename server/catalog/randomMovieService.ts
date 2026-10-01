@@ -23,7 +23,7 @@ export async function getRandomMovie(filters: RandomMovieFilters): Promise<Catal
   return item ? mapMovie(item) : null
 }
 
-export async function getVotingMovies(count = 10) {
+export async function getVotingMovies(count = 10, filters: RandomMovieFilters = {}) {
   if (!env.tmdbApiKey) return []
   const url = new URL('https://api.themoviedb.org/3/discover/movie')
   url.searchParams.set('api_key', env.tmdbApiKey)
@@ -32,10 +32,19 @@ export async function getVotingMovies(count = 10) {
   url.searchParams.set('vote_average.gte', '6.5')
   url.searchParams.set('vote_count.gte', '300')
   url.searchParams.set('page', String(1 + Math.floor(Math.random() * 15)))
+  if (filters.genre && genreIds[filters.genre]) url.searchParams.set('with_genres', String(genreIds[filters.genre]))
+  if (filters.maxRuntime) url.searchParams.set('with_runtime.lte', String(filters.maxRuntime))
   const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
   if (!response.ok) return []
   const data = await response.json() as { results: TmdbMovie[] }
-  return data.results.sort(() => Math.random() - 0.5).slice(0, count).map(mapMovie)
+  const shuffled = [...data.results]
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    const item = shuffled[index]
+    shuffled[index] = shuffled[swap]
+    shuffled[swap] = item
+  }
+  return shuffled.slice(0, count).map(mapMovie)
 }
 
 function mapMovie(item: TmdbMovie): CatalogItem {

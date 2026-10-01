@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { createRoom } from '../features/rooms/api/roomApi'
 import type { RoomMode } from '../entities/room/model'
 import { AppHeader } from './components/AppHeader'
-import { getDisplayName, saveRoomMember } from '../features/rooms/roomIdentity'
+import { getDisplayName, saveDisplayName } from '../features/rooms/roomIdentity'
 
 const modes: { id: RoomMode; title: string; detail: string; icon: typeof Heart }[] = [
   { id: 'couple', title: 'Для двоих', detail: 'Найдём пересечение ваших вкусов.', icon: Heart },
@@ -18,7 +18,7 @@ export function CreateRoomPage() {
   const [mode, setMode] = useState<RoomMode>(searchParams.get('mode') === 'couple' ? 'couple' : 'group')
   const [title, setTitle] = useState('Киновечер')
   const [hostName, setHostName] = useState(getDisplayName)
-  const create = useMutation({ mutationFn: createRoom, onSuccess: (room) => { saveRoomMember(room.id, room.members[0].id, hostName); navigate(`/rooms/${room.id}`) } })
+  const create = useMutation({ mutationFn: createRoom, onSuccess: (room) => { saveDisplayName(hostName); navigate(`/rooms/${room.id}`) } })
 
   return (
     <main className="min-h-screen bg-[#090914] text-white"><div className="aurora pointer-events-none fixed inset-0 -z-0 opacity-70" /><AppHeader />

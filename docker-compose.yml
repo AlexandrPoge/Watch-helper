@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: watch_helper
+      POSTGRES_USER: watch_helper
+      POSTGRES_PASSWORD: watch_helper_local
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - watch_helper_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watch_helper -d watch_helper"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  watch_helper_pg:

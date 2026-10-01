@@ -1,35 +1,16 @@
-import { Check, Heart, Play, X } from 'lucide-react'
-import type { Room } from '../../../entities/room/model'
+import { Check, Heart, X } from 'lucide-react'
+import type { RoomRound, VoteValue } from '../../../entities/room/model'
 import { mediaUrl } from '../../../shared/lib/mediaUrl'
 
-type VotingPanelProps = {
-  room: Room
-  memberId?: string
-  isStarting: boolean
-  isVoting: boolean
-  onStart: () => void
-  onVote: (movieId: string, value: 'up' | 'skip') => void
+type Props = { round: RoomRound; busy: boolean; onVote: (movieId: string, value: VoteValue) => void }
+
+export function VotingPanel({ round, busy, onVote }: Props) {
+  if (!round.eligible) return <p className="mt-5 rounded-2xl bg-violet-400/10 p-5 text-sm text-violet-200">Этот раунд уже начался. Ты сможешь участвовать в следующем.</p>
+  const votes = new Map(round.myVotes.map((item) => [item.movieId, item.value]))
+  const progress = round.totalVotes ? Math.round(100 * round.voteCount / round.totalVotes) : 0
+  return <section className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6"><div className="flex justify-between gap-2 text-xs text-slate-400"><span>Общий прогресс</span><span>{round.voteCount} из {round.totalVotes}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8"><div className="h-full rounded-full bg-violet-400 transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-3 text-xs text-slate-500">Чужие голоса откроются после завершения выбора.</p><div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">{round.candidates.map((movie) => <article key={movie.id} className="relative w-40 shrink-0 overflow-hidden rounded-2xl bg-slate-950 sm:w-48"><img alt={movie.title} loading="lazy" className="aspect-[2/3] w-full object-cover opacity-80" src={mediaUrl(movie.posterUrl)} /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-3"><p className="line-clamp-2 text-sm font-bold">{movie.title}</p><p className="text-xs text-slate-400">{movie.year}</p><div className="mt-3 flex gap-2"><VoteButton active={votes.get(movie.id) === 'up'} disabled={busy} label="Нравится" onClick={() => onVote(movie.id, 'up')}><Heart size={15} /></VoteButton><VoteButton active={votes.get(movie.id) === 'skip'} disabled={busy} label="Пропустить" onClick={() => onVote(movie.id, 'skip')}><X size={15} /></VoteButton></div></div></article>)}</div></section>
 }
 
-export function VotingPanel({ room, memberId, isStarting, isVoting, onStart, onVote }: VotingPanelProps) {
-  if (room.candidates.length === 0) return <StartVoting isStarting={isStarting} onStart={onStart} />
-  const myVotes = new Map(room.votes.filter((vote) => vote.memberId === memberId).map((vote) => [vote.movieId, vote.value]))
-  const winner = room.candidates.find((movie) => movie.id === room.winnerId)
-  const totalVotes = room.members.length * room.candidates.length
-  const progress = totalVotes ? Math.round((room.votes.length / totalVotes) * 100) : 0
-  return (
-    <section className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-300">Совместный выбор</p><h2 className="mt-1 text-xl font-bold">Оцени варианты</h2></div>{winner && <span className="rounded-full bg-emerald-300 px-3 py-1 text-xs font-black text-emerald-950">Лидер: {winner.title}</span>}</div>
-      <div className="mt-5"><div className="mb-2 flex justify-between text-xs text-slate-500"><span>Общий прогресс</span><span>{room.votes.length} из {totalVotes}</span></div><div className="h-2 overflow-hidden rounded-full bg-white/7"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all" style={{ width: `${progress}%` }} /></div></div>
-      {!memberId && <p className="mt-4 rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">Войди в комнату, чтобы голосовать.</p>}
-      <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">{room.candidates.map((movie) => <article key={movie.id} className="relative min-w-42 overflow-hidden rounded-2xl bg-slate-950 sm:min-w-48"><img alt={movie.title} className="aspect-[2/3] w-full object-cover opacity-80" src={mediaUrl(movie.posterUrl)} /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3"><p className="text-sm font-bold">{movie.title}</p><p className="text-xs text-slate-400">{movie.year}</p><div className="mt-3 flex gap-2"><VoteButton active={myVotes.get(movie.id) === 'up'} disabled={!memberId || isVoting} icon={<Heart size={15} />} label="Нравится" onClick={() => onVote(movie.id, 'up')} /><VoteButton active={myVotes.get(movie.id) === 'skip'} disabled={!memberId || isVoting} icon={<X size={15} />} label="Пропустить" onClick={() => onVote(movie.id, 'skip')} /></div></div></article>)}</div>
-    </section>
-  )
-}
-
-function StartVoting({ isStarting, onStart }: { isStarting: boolean; onStart: () => void }) {
-  return <section className="mt-5 rounded-3xl border border-dashed border-violet-300/30 bg-violet-400/8 p-6 text-center"><Play className="mx-auto text-violet-300" size={24} /><h2 className="mt-3 text-xl font-bold">Готовы искать общий фильм?</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">Запустим подборку — каждый оценит варианты, а лидер определится автоматически.</p><button onClick={onStart} disabled={isStarting} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-bold hover:bg-violet-400 disabled:opacity-50">{isStarting ? 'Подбираем…' : 'Начать выбор'}</button></section>
-}
-
-function VoteButton({ active, disabled, icon, label, onClick }: { active: boolean; disabled: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
-  return <button aria-label={label} disabled={disabled} onClick={onClick} className={`grid size-8 place-items-center rounded-lg transition disabled:opacity-40 ${active ? 'bg-violet-400 text-slate-950' : 'bg-white/10 text-white hover:bg-white/20'}`}>{active && label === 'Нравится' ? <Check size={15} /> : icon}</button>
+function VoteButton({ active, disabled, label, onClick, children }: { active: boolean; disabled: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
+  return <button aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick} className={`grid size-8 place-items-center rounded-lg disabled:opacity-40 ${active ? 'bg-violet-400 text-slate-950' : 'bg-white/10 hover:bg-white/20'}`}>{active ? <Check size={15} /> : children}</button>
 }
