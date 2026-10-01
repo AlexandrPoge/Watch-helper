@@ -6,8 +6,10 @@ export function TechBackground() {
   useEffect(() => {
     const scene = sceneRef.current
     if (!scene) return
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
     let frame = 0
     const updateLight = (event: PointerEvent) => {
+      if (document.documentElement.dataset.motion === 'less' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         scene.style.setProperty('--pointer-x', `${event.clientX}px`)

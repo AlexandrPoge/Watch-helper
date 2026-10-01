@@ -1,17 +1,18 @@
+import { Suspense, lazy } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { HomePage } from '../pages/HomePage'
-import { CreateRoomPage } from '../pages/CreateRoomPage'
-import { RoomPage } from '../pages/RoomPage'
-import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
-import { SeriesPage } from '../pages/SeriesPage'
-import { MovieDetailsPage } from '../pages/MovieDetailsPage'
-import { PersonPage } from '../pages/PersonPage'
-import { ProfilePage } from '../pages/ProfilePage'
-import { RandomMoviePage } from '../pages/RandomMoviePage'
 import { MobileNav } from '../pages/components/MobileNav'
 import { TechBackground } from '../pages/components/TechBackground'
 
+const HomePage = lazy(() => import('../pages/HomePage').then((module) => ({ default: module.HomePage })))
+const CreateRoomPage = lazy(() => import('../pages/CreateRoomPage').then((module) => ({ default: module.CreateRoomPage })))
+const RoomPage = lazy(() => import('../pages/RoomPage').then((module) => ({ default: module.RoomPage })))
+const SeriesDetailsPage = lazy(() => import('../pages/SeriesDetailsPage').then((module) => ({ default: module.SeriesDetailsPage })))
+const SeriesPage = lazy(() => import('../pages/SeriesPage').then((module) => ({ default: module.SeriesPage })))
+const MovieDetailsPage = lazy(() => import('../pages/MovieDetailsPage').then((module) => ({ default: module.MovieDetailsPage })))
+const PersonPage = lazy(() => import('../pages/PersonPage').then((module) => ({ default: module.PersonPage })))
+const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
+const RandomMoviePage = lazy(() => import('../pages/RandomMoviePage').then((module) => ({ default: module.RandomMoviePage })))
 const queryClient = new QueryClient()
 
 export function App() {
@@ -22,7 +23,7 @@ export function App() {
 
 function AnimatedRoutes() {
   const location = useLocation()
-  return <div key={location.pathname} className="page-transition"><Routes location={location}>
+  return <div key={location.pathname} className="page-transition"><Suspense fallback={<div className="min-h-screen p-8 text-sm text-slate-400">Загружаем страницу…</div>}><Routes location={location}>
       <Route path="/" element={<HomePage />} />
       <Route path="/series" element={<SeriesPage />} />
       <Route path="/series/:catalogId" element={<SeriesDetailsPage />} />
@@ -33,5 +34,5 @@ function AnimatedRoutes() {
       <Route path="/rooms/new" element={<CreateRoomPage />} />
       <Route path="/rooms/:roomId" element={<RoomPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes></div>
+    </Routes></Suspense></div>
 }
