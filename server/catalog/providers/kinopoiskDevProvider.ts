@@ -25,7 +25,7 @@ export const poiskKinoProvider: CatalogProvider = {
     const url = new URL('https://api.poiskkino.dev/v1.4/movie/search')
     url.searchParams.set('query', query)
     url.searchParams.set('limit', '20')
-    const response = await fetch(url, { headers: { 'X-API-KEY': env.kinopoiskDevToken } })
+    const response = await fetch(url, { headers: { 'X-API-KEY': env.kinopoiskDevToken }, signal: AbortSignal.timeout(4_000) })
     if (!response.ok) throw new Error(`PoiskKino returned ${response.status}`)
     const data = await response.json() as KinopoiskResponse
     return data.docs.map(toCatalogItem)
@@ -36,7 +36,7 @@ function toCatalogItem(movie: KinopoiskMovie): CatalogItem {
   const kind: MediaKind = movie.type?.includes('series') ? 'series' : 'movie'
   return {
     id: `kinopoisk:${kind}:${movie.id}`,
-    title: movie.name ?? movie.alternativeName ?? 'Без названия',
+    title: movie.name?.trim() || movie.alternativeName?.trim() || 'Без названия',
     originalTitle: movie.alternativeName,
     kind,
     year: movie.year,

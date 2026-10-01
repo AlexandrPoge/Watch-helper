@@ -6,5 +6,5 @@ export function usePeopleSearch(query: string) {
 }
 
 export function usePerson(catalogId?: string) {
-  return useQuery({ queryKey: ['person', catalogId], queryFn: () => fetchPerson(catalogId!), enabled: Boolean(catalogId), staleTime: 10 * 60_000 })
+  return useQuery({ queryKey: ['person', catalogId], queryFn: () => fetchPerson(catalogId!), enabled: Boolean(catalogId), staleTime: 10 * 60_000, retry: 1 })
 }

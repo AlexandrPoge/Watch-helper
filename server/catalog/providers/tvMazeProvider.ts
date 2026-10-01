@@ -18,7 +18,7 @@ export const tvMazeProvider: CatalogProvider = {
   async search(query) {
     const url = new URL('https://api.tvmaze.com/search/shows')
     url.searchParams.set('q', query)
-    const response = await fetch(url)
+    const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
     if (!response.ok) throw new Error(`TVmaze returned ${response.status}`)
     const data = await response.json() as TvMazeSearchResult[]
     return data.map(({ score, show }) => ({

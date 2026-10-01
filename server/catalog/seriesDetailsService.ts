@@ -1,6 +1,8 @@
 import { env } from '../config/env'
 import type { CatalogItem, SeriesDetails } from './types'
 import { mapTmdbWatch, tmdbExternalLinks } from './watchOptions'
+import { mapOmdbCast } from './omdbCast'
+import { isActor } from './poiskCast'
 
 export async function getSeriesDetails(catalogId: string): Promise<SeriesDetails | null> {
   const [provider, kind, id] = catalogId.split(':')
@@ -27,7 +29,7 @@ async function getOmdbSeries(id: string): Promise<SeriesDetails | null> {
   const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
   const item = await response.json() as OmdbDetails
   if (!response.ok || item.Response === 'False') return null
-  return { id: `omdb:series:${id}`, title: item.Title, kind: 'series', year: Number(item.Year?.slice(0, 4)) || undefined, duration: item.Runtime, overview: item.Plot, posterUrl: item.Poster === 'N/A' ? undefined : item.Poster, rating: Number(item.imdbRating) || undefined, genres: item.Genre?.split(', '), match: Math.round((Number(item.imdbRating) || 6) * 10), sourceNames: ['OMDb'], country: item.Country, watchOptions: [], externalLinks: [{ name: 'IMDb', url: `https://www.imdb.com/title/${id}/` }], cast: [], similar: [] }
+  return { id: `omdb:series:${id}`, title: item.Title, kind: 'series', year: Number(item.Year?.slice(0, 4)) || undefined, duration: item.Runtime, overview: item.Plot, posterUrl: item.Poster === 'N/A' ? undefined : item.Poster, rating: Number(item.imdbRating) || undefined, genres: item.Genre?.split(', '), match: Math.round((Number(item.imdbRating) || 6) * 10), sourceNames: ['OMDb'], country: item.Country, watchOptions: [], externalLinks: [{ name: 'IMDb', url: `https://www.imdb.com/title/${id}/` }], cast: mapOmdbCast(item.Actors), similar: [] }
 }
 
 async function getTmdbDetails(id: string): Promise<SeriesDetails | null> {
@@ -82,7 +84,7 @@ function mapPoiskDetails(item: PoiskDetails): SeriesDetails {
     trailerUrl: trailer?.url,
     watchOptions: (item.watchability?.items ?? []).flatMap((option) => option.url ? [{ name: option.name, type: 'stream' as const, logoUrl: option.logo?.url, url: option.url }] : []),
     externalLinks: [{ name: 'Кинопоиск', url: `https://www.kinopoisk.ru/series/${item.id}/` }, ...(item.externalId?.imdb ? [{ name: 'IMDb', url: `https://www.imdb.com/title/${item.externalId.imdb}/` }] : [])],
-    cast: (item.persons ?? []).filter((person) => person.enProfession === 'actor').slice(0, 8).map((person) => ({ id: `kinopoisk:person:${person.id}`, name: person.name ?? person.enName ?? 'Актёр', character: person.description, photoUrl: person.photo })),
+    cast: (item.persons ?? []).filter((person) => isActor(person)).slice(0, 8).map((person) => ({ id: `kinopoisk:person:${person.id}`, name: person.name ?? person.enName ?? 'Актёр', character: person.description, photoUrl: person.photo })),
     similar: (item.similarMovies ?? []).slice(0, 8).map((movie) => ({ id: `kinopoisk:series:${movie.id}`, title: movie.name ?? movie.alternativeName ?? 'Без названия', kind: 'series', year: movie.year, posterUrl: movie.poster?.url, match: 70, sourceNames: ['PoiskKino'] })),
   }
 }
@@ -97,6 +99,6 @@ const image = (path?: string, size = 'w500') => path ? `https://image.tmdb.org/t
 type TmdbSimilar = { id: number; name: string; first_air_date?: string; overview?: string; poster_path?: string; vote_average?: number }
 type TmdbDetails = TmdbSimilar & { original_name?: string; backdrop_path?: string; vote_count?: number; episode_run_time?: number[]; genres?: { name: string }[]; status?: string; number_of_seasons?: number; number_of_episodes?: number; production_countries?: { name: string }[]; videos?: { results: { site: string; type: string; key: string }[] }; credits?: { cast: { id: number; name: string; character?: string; profile_path?: string }[] }; recommendations?: { results: TmdbSimilar[] }; 'watch/providers'?: { results?: Record<string, never> }; external_ids?: { imdb_id?: string } }
 type PoiskSimilar = { id: number; name?: string; alternativeName?: string; year?: number; poster?: { url?: string } }
-type PoiskDetails = PoiskSimilar & { description?: string; seriesLength?: number; backdrop?: { url?: string }; rating?: { kp?: number }; votes?: { kp?: number }; genres?: { name: string }[]; countries?: { name: string }[]; status?: string; ageRating?: number; seasonsInfo?: unknown[]; releaseYears?: { episodesCount?: number }[]; videos?: { trailers?: { url?: string }[] }; persons?: { id: number; name?: string; enName?: string; enProfession?: string; description?: string; photo?: string }[]; similarMovies?: PoiskSimilar[]; watchability?: { items?: { name: string; url?: string; logo?: { url?: string } }[] }; externalId?: { imdb?: string } }
+type PoiskDetails = PoiskSimilar & { description?: string; seriesLength?: number; backdrop?: { url?: string }; rating?: { kp?: number }; votes?: { kp?: number }; genres?: { name: string }[]; countries?: { name: string }[]; status?: string; ageRating?: number; seasonsInfo?: unknown[]; releaseYears?: { episodesCount?: number }[]; videos?: { trailers?: { url?: string }[] }; persons?: { id: number; name?: string; enName?: string; enProfession?: string; profession?: string; description?: string; photo?: string }[]; similarMovies?: PoiskSimilar[]; watchability?: { items?: { name: string; url?: string; logo?: { url?: string } }[] }; externalId?: { imdb?: string } }
 type TvMazeDetails = { id: number; name: string; url?: string; premiered?: string; averageRuntime?: number; summary?: string; image?: { medium?: string; original?: string }; rating?: { average?: number }; genres?: string[]; status?: string; network?: { country?: { name?: string } }; _embedded?: { cast: { person: { id: number; name: string; image?: { medium?: string } }; character: { name?: string } }[] } }
-type OmdbDetails = { Response: 'True' | 'False'; Title: string; Year?: string; Runtime?: string; Plot?: string; Poster?: string; imdbRating?: string; Genre?: string; Country?: string }
+type OmdbDetails = { Response: 'True' | 'False'; Title: string; Year?: string; Runtime?: string; Plot?: string; Poster?: string; imdbRating?: string; Genre?: string; Country?: string; Actors?: string }

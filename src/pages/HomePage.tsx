@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { movies } from '../entities/movie/mockMovies'
 import { MovieShelf } from '../features/movies/components/MovieShelf'
 import { usePeopleSearch } from '../features/people/usePeople'
@@ -14,7 +15,16 @@ import { DiscoveryHero } from './components/DiscoveryHero'
 import { TasteStats } from './components/TasteStats'
 
 export function HomePage() {
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get('q') ?? ''
+  const actorSearch = searchParams.get('tab') === 'people' && Boolean(initialQuery)
+  const [query, setQuery] = useState(initialQuery)
+  useEffect(() => setQuery(initialQuery), [initialQuery])
+  useEffect(() => {
+    if (!actorSearch) return
+    const frame = requestAnimationFrame(() => document.getElementById('search-results')?.scrollIntoView({ block: 'start' }))
+    return () => cancelAnimationFrame(frame)
+  }, [actorSearch, initialQuery])
   const debouncedQuery = useDebouncedValue(query)
   const watchlist = useWatchlist()
   const taste = useTasteProfile()

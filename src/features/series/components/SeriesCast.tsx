@@ -13,5 +13,6 @@ export function SeriesCast({ cast }: { cast: SeriesDetails['cast'] }) {
 function CastPerson({ person }: { person: SeriesDetails['cast'][number] }) {
   const content = <><div className="aspect-[3/4] overflow-hidden rounded-2xl bg-white/5">{person.photoUrl ? <img src={mediaUrl(person.photoUrl)} alt={person.name} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" /> : <div className="grid h-full place-items-center text-slate-600"><UserRound size={26} /></div>}</div><h3 className="mt-2 line-clamp-2 text-sm font-bold leading-tight group-hover:text-violet-300">{person.name}</h3>{person.character && <p className="mt-1 line-clamp-2 text-xs leading-tight text-slate-500">{person.character}</p>}</>
   const className = 'group w-28 shrink-0'
-  return person.id.startsWith('tmdb:') || person.id.startsWith('kinopoisk:') ? <Link to={`/people/${encodeURIComponent(person.id)}`} className={className}>{content}</Link> : <div className={className}>{content}</div>
+  const destination = person.id.startsWith('search:person:') ? `/?q=${encodeURIComponent(person.name)}&tab=people` : `/people/${encodeURIComponent(person.id)}`
+  return <Link to={destination} className={className}>{content}</Link>
 }

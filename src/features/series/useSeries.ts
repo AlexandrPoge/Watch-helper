@@ -18,5 +18,6 @@ export function useSeriesDetails(catalogId?: string) {
     queryFn: () => fetchSeriesDetails(catalogId!),
     enabled: Boolean(catalogId),
     staleTime: 10 * 60_000,
+    retry: 1,
   })
 }

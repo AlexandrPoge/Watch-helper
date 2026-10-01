@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useLayoutEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { MobileNav } from '../pages/components/MobileNav'
@@ -23,6 +23,9 @@ export function App() {
 
 function AnimatedRoutes() {
   const location = useLocation()
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname, location.search])
   return <div key={location.pathname} className="page-transition"><Suspense fallback={<div className="min-h-screen p-8 text-sm text-slate-400">Загружаем страницу…</div>}><Routes location={location}>
       <Route path="/" element={<HomePage />} />
       <Route path="/series" element={<SeriesPage />} />

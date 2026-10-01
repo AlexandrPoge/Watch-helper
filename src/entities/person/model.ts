@@ -12,5 +12,6 @@ export type PersonDetails = Person & {
   biography?: string
   birthday?: string
   placeOfBirth?: string
+  country?: string
   credits: Movie[]
 }

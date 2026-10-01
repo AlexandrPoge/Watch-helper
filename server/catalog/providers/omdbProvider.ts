@@ -12,7 +12,7 @@ export const omdbProvider: CatalogProvider = {
     const url = new URL('https://www.omdbapi.com/')
     url.searchParams.set('apikey', env.omdbKey)
     url.searchParams.set('s', query)
-    const response = await fetch(url)
+    const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
     if (!response.ok) throw new Error(`OMDb returned ${response.status}`)
     const data = await response.json() as OmdbResponse
     if (data.Response === 'False') return []

@@ -45,6 +45,7 @@ export type PersonDetails = PersonSummary & {
   biography?: string
   birthday?: string
   placeOfBirth?: string
+  country?: string
   credits: CatalogItem[]
 }
 

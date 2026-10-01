@@ -30,7 +30,7 @@ export const tmdbProvider: CatalogProvider = {
     url.searchParams.set('query', query)
     url.searchParams.set('language', 'ru-RU')
     url.searchParams.set('api_key', env.tmdbApiKey)
-    const response = await fetch(url)
+    const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
     if (!response.ok) throw new Error(`TMDB returned ${response.status}`)
     const data = await response.json() as TmdbResponse
     return data.results.filter((item) => item.media_type !== 'person').map(toCatalogItem)
