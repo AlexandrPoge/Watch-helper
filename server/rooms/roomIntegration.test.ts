@@ -72,4 +72,27 @@ run('persistent room integration', () => {
     await expect(joinRoom(roomId, 'Лишний', stranger)).rejects.toThrow('ROOM_IS_FULL')
     await closeRoom(roomId, host)
   })
+
+  it('keeps blind candidate identities private until the result and restores secret votes', async () => {
+    const roomId = await createRoom({ title: 'Слепой сеанс', mode: 'couple', hostName: 'Аня' }, host)
+    roomIds.push(roomId)
+    await joinRoom(roomId, 'Макс', guest)
+    await startRound(roomId, host, { blind: true }, movies)
+    const hostRound = (await getRoomView(roomId, host))?.round
+    const guestRound = (await getRoomView(roomId, guest))?.round
+    expect(hostRound?.blind).toBe(true)
+    expect(hostRound?.candidates).toEqual(guestRound?.candidates)
+    expect(JSON.stringify(hostRound)).not.toContain(movies[0].id)
+    expect(JSON.stringify(hostRound)).not.toContain(movies[0].title)
+    const voteId = hostRound?.candidates[0].id ?? ''
+    await expect(vote(roomId, host, movies[0].id, 'up')).rejects.toThrow('MOVIE_NOT_FOUND')
+    await vote(roomId, host, voteId, 'up')
+    expect((await getRoomView(roomId, host))?.round?.myVotes[0].movieId).toBe(voteId)
+    expect((await getRoomView(roomId, guest))?.round?.myVotes).toEqual([])
+    await vote(roomId, guest, voteId, 'up')
+    const result = (await getRoomView(roomId, guest))?.round
+    expect(result?.status).toBe('completed')
+    expect(result?.candidates[0].id).toBe(movies[0].id)
+    expect(result?.winners).toEqual([movies[0].id])
+  })
 })

@@ -6,7 +6,7 @@ import { cancelRound, startRound, vote } from './roundRepository'
 import { getRoomView } from './roomView'
 import { evictMember, notifyRoom } from './socketHub'
 import { getVotingMovies } from '../catalog/randomMovieService'
-import type { Mood, RoomMode, VoteValue } from './types'
+import type { RoomMode, RoundSetup, VoteValue } from './types'
 
 export const roomRouter = Router()
 type Handler = (request: Request<{ roomId: string; memberId: string }>, response: Response) => Promise<void>
@@ -47,11 +47,11 @@ roomRouter.post('/api/rooms/:roomId/join', handle(async (request, response) => {
 }))
 
 roomRouter.post('/api/rooms/:roomId/rounds', handle(async (request, response) => {
-  const mood = parseMood(request.body)
+  const setup = parseSetup(request.body)
   await requireHost(request.params.roomId, readGuest(request))
-  const movies = await getVotingMovies(12, mood).catch(() => { throw new RoomError('NO_CANDIDATES', 502) })
-  const candidates = movies.flatMap((movie) => movie.posterUrl ? [{ id: movie.id, title: movie.title, year: movie.year ?? 0, posterUrl: movie.posterUrl, rating: movie.rating, overview: movie.overview }] : [])
-  await startRound(request.params.roomId, readGuest(request), mood, candidates)
+  const movies = await getVotingMovies(12, setup).catch(() => { throw new RoomError('NO_CANDIDATES', 502) })
+  const candidates = movies.flatMap((movie) => movie.posterUrl ? [{ id: movie.id, title: movie.title, year: movie.year ?? 0, posterUrl: movie.posterUrl, rating: movie.rating, overview: setup.blind ? `${movie.genres?.slice(0, 2).join(' / ') || 'Кино'} · ${movie.overview ?? ''}` : movie.overview }] : [])
+  await startRound(request.params.roomId, readGuest(request), setup, candidates)
   notifyRoom(request.params.roomId)
   response.json({ room: await view(request.params.roomId, readGuest(request)) })
 }))
@@ -93,10 +93,10 @@ function cleanText(value: unknown, max: number) {
   return typeof value === 'string' ? value.trim().slice(0, max) || undefined : undefined
 }
 
-function parseMood(value: unknown): Mood {
+function parseSetup(value: unknown): RoundSetup {
   const input = value && typeof value === 'object' ? value as Record<string, unknown> : {}
   const allowed = ['action', 'comedy', 'drama', 'fantasy', 'horror', 'romance', 'sciFi', 'thriller']
   const genre = typeof input.genre === 'string' && allowed.includes(input.genre) ? input.genre : undefined
   const maxRuntime = [90, 120, 150].includes(Number(input.maxRuntime)) ? Number(input.maxRuntime) : undefined
-  return { genre, maxRuntime }
+  return { genre, maxRuntime, blind: input.blind === true }
 }

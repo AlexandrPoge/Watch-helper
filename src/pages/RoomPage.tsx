@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Wifi, WifiOff } from 'lucide-react'
 import { useParams } from 'react-router-dom'
-import type { Room, Mood, VoteValue } from '../entities/room/model'
+import type { Room, RoundSetup, VoteValue } from '../entities/room/model'
 import { cancelRound, closeRoom, getShareInfo, joinRoom, removeMember, startRound, voteForMovie } from '../features/rooms/api/roomApi'
 import { useLiveRoom } from '../features/rooms/useLiveRoom'
 import { getDisplayName, saveDisplayName } from '../features/rooms/roomIdentity'
@@ -24,7 +24,7 @@ export function RoomPage() {
   const [name, setName] = useState(getDisplayName)
   const save = (room: Room) => client.setQueryData(['room', roomId], room)
   const join = useMutation({ mutationFn: () => joinRoom(roomId, name), onSuccess: (room) => { saveDisplayName(name); save(room) } })
-  const start = useMutation({ mutationFn: (mood: Mood) => startRound(roomId, mood), onSuccess: save })
+  const start = useMutation({ mutationFn: (setup: RoundSetup) => startRound(roomId, setup), onSuccess: save })
   const cancel = useMutation({ mutationFn: () => cancelRound(roomId), onSuccess: save })
   const close = useMutation({ mutationFn: () => closeRoom(roomId), onSuccess: save })
   const kick = useMutation({ mutationFn: (id: string) => removeMember(roomId, id), onSuccess: save })
@@ -54,7 +54,7 @@ export function RoomPage() {
         {!room.me && room.status === 'open' && <RoomJoin name={name} busy={join.isPending} onNameChange={setName} onJoin={() => join.mutate()} />}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{message(error.message)}</p>}
         {room.me && room.status === 'open' && <>
-          <RoomRoundControls room={room} busy={start.isPending || cancel.isPending || close.isPending} onStart={(mood) => start.mutate(mood)} onCancel={() => cancel.mutate()} onClose={() => close.mutate()} />
+          <RoomRoundControls room={room} busy={start.isPending || cancel.isPending || close.isPending} onStart={(setup) => start.mutate(setup)} onCancel={() => cancel.mutate()} onClose={() => close.mutate()} />
           {room.round?.status === 'active' && (room.mode === 'couple'
             ? <PairVotingPanel round={room.round} memberCount={room.members.length} busy={vote.isPending} onVote={(movieId, value) => vote.mutate({ movieId, value })} />
             : <VotingPanel round={room.round} busy={vote.isPending} onVote={(movieId, value) => vote.mutate({ movieId, value })} />)}

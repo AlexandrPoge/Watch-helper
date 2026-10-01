@@ -1,8 +1,9 @@
 import { transaction } from '../db/pool'
 import { getWinners } from './roundResults'
+import { presentRound } from './blindRound'
 import type { MovieCandidate, RoomView, Round, VoteValue } from './types'
 
-type DbRound = { id: string; ordinal: number; status: Round['status']; genre: string | null; max_runtime: number | null }
+type DbRound = { id: string; ordinal: number; status: Round['status']; genre: string | null; max_runtime: number | null; blind: boolean }
 type DbVote = { round_id: string; member_id: string; movie_id: string; value: VoteValue }
 
 export async function getRoomView(roomId: string, guest?: string): Promise<RoomView | undefined> {
@@ -19,18 +20,18 @@ export async function getRoomView(roomId: string, guest?: string): Promise<RoomV
       history: [],
     }
     if (!me) return view
-    const rounds = (await client.query("SELECT id,ordinal,status,genre,max_runtime FROM room_rounds WHERE room_id=$1 ORDER BY ordinal DESC LIMIT 20", [roomId])).rows as DbRound[]
+    const rounds = (await client.query("SELECT id,ordinal,status,genre,max_runtime,blind FROM room_rounds WHERE room_id=$1 ORDER BY ordinal DESC LIMIT 20", [roomId])).rows as DbRound[]
     if (!rounds.length) return view
     const roundIds = rounds.map((item) => item.id)
-    const candidates = (await client.query('SELECT round_id,movie_id,position,title,year,poster_url,rating,overview FROM round_candidates WHERE round_id=ANY($1) ORDER BY position', [roundIds])).rows
+    const candidates = (await client.query('SELECT round_id,movie_id,vote_id,position,title,year,poster_url,rating,overview FROM round_candidates WHERE round_id=ANY($1) ORDER BY position', [roundIds])).rows
     const votes = (await client.query('SELECT round_id,member_id,movie_id,value FROM round_votes WHERE round_id=ANY($1)', [roundIds])).rows as DbVote[]
     const participants = (await client.query('SELECT round_id,member_id FROM round_participants WHERE round_id=ANY($1)', [roundIds])).rows
     const details = rounds.map((round) => {
       const movies: MovieCandidate[] = candidates.filter((item) => item.round_id === round.id).map((item) => ({ id: item.movie_id, title: item.title, year: item.year, posterUrl: item.poster_url, rating: item.rating == null ? undefined : Number(item.rating), overview: item.overview ?? undefined }))
       const roundVotes = votes.filter((item) => item.round_id === round.id)
       const memberIds = participants.filter((item) => item.round_id === round.id).map((item) => item.member_id as string)
-      return {
-        id: round.id, ordinal: round.ordinal, status: round.status,
+      const details: Round = {
+        id: round.id, ordinal: round.ordinal, status: round.status, blind: round.blind,
         mood: { genre: round.genre ?? undefined, maxRuntime: round.max_runtime ?? undefined },
         candidates: movies,
         myVotes: roundVotes.filter((vote) => vote.member_id === me.id).map((vote) => ({ movieId: vote.movie_id, value: vote.value })),
@@ -38,9 +39,11 @@ export async function getRoomView(roomId: string, guest?: string): Promise<RoomV
         winners: round.status === 'completed' ? getWinners(room.mode, movies.map((movie) => movie.id), memberIds, roundVotes) : [],
         eligible: memberIds.includes(me.id),
       }
+      const voteIds = new Map(candidates.filter((item) => item.round_id === round.id).map((item) => [item.movie_id as string, item.vote_id as string]))
+      return presentRound(details, voteIds)
     })
     view.round = details.find((round) => round.status === 'active') ?? details.find((round) => round.status === 'completed')
-    view.history = details.filter((round) => round.status === 'completed').map(({ id, ordinal, status, winners, candidates }) => ({ id, ordinal, status, winners, candidates }))
+    view.history = details.filter((round) => round.status === 'completed').map(({ id, ordinal, status, blind, winners, candidates }) => ({ id, ordinal, status, blind, winners, candidates }))
     return view
   })
 }

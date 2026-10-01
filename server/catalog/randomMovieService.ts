@@ -3,6 +3,7 @@ import type { CatalogItem } from './types'
 
 export type RandomMovieFilters = { genre?: string; maxRuntime?: number }
 const genreIds: Record<string, number> = { action: 28, comedy: 35, drama: 18, fantasy: 14, horror: 27, romance: 10749, sciFi: 878, thriller: 53 }
+const genreNames: Record<number, string> = { 12: 'Приключения', 14: 'Фэнтези', 16: 'Анимация', 18: 'Драма', 27: 'Ужасы', 28: 'Боевик', 35: 'Комедия', 36: 'История', 53: 'Триллер', 80: 'Криминал', 99: 'Документальный', 878: 'Фантастика', 9648: 'Детектив', 10749: 'Романтика', 10751: 'Семейный' }
 
 export async function getRandomMovie(filters: RandomMovieFilters): Promise<CatalogItem | null> {
   if (!env.tmdbApiKey) return null
@@ -48,7 +49,7 @@ export async function getVotingMovies(count = 10, filters: RandomMovieFilters = 
 }
 
 function mapMovie(item: TmdbMovie): CatalogItem {
-  return { id: `tmdb:movie:${item.id}`, title: item.title, originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, match: Math.round(item.vote_average * 10), sourceNames: ['TMDB'] }
+  return { id: `tmdb:movie:${item.id}`, title: item.title, originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: item.genre_ids?.flatMap((id) => genreNames[id] ? [genreNames[id]] : []), match: Math.round(item.vote_average * 10), sourceNames: ['TMDB'] }
 }
 
-type TmdbMovie = { id: number; title: string; original_title?: string; release_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; vote_average: number; vote_count?: number }
+type TmdbMovie = { id: number; title: string; original_title?: string; release_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; genre_ids?: number[]; vote_average: number; vote_count?: number }

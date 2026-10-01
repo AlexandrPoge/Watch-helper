@@ -1,20 +1,44 @@
 import { useState } from 'react'
-import type { Mood, Room } from '../../../entities/room/model'
+import type { Room, RoundSetup } from '../../../entities/room/model'
 import { RoomResult } from './RoomResult'
 
 const genres = [['', 'Любой жанр'], ['comedy', 'Комедия'], ['drama', 'Драма'], ['thriller', 'Триллер'], ['sciFi', 'Фантастика'], ['romance', 'Романтика'], ['horror', 'Ужасы']]
 const runtimes = [['', 'Любая длительность'], ['90', 'До 1,5 ч'], ['120', 'До 2 ч'], ['150', 'До 2,5 ч']]
-type Props = { room: Room; busy: boolean; onStart: (mood: Mood) => void; onCancel: () => void; onClose: () => void }
+type Props = { room: Room; busy: boolean; onStart: (setup: RoundSetup) => void; onCancel: () => void; onClose: () => void }
 
 export function RoomRoundControls({ room, busy, onStart, onCancel, onClose }: Props) {
   const [genre, setGenre] = useState('')
   const [maxRuntime, setMaxRuntime] = useState('')
+  const [blind, setBlind] = useState(false)
   const active = room.round?.status === 'active'
+  const isHost = Boolean(room.me?.isHost)
+  const waiting = room.mode === 'couple' && room.members.length < 2
+
   return <section className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6">
     {room.round?.status === 'completed' && <RoomResult round={room.round} />}
-    {!active && <><h2 className="text-xl font-black">Настроение вечера</h2><p className="mt-1 text-sm text-slate-400">Выбери историю и время — фильмы в раунде подстроятся под вас.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><Select title="Жанр" value={genre} options={genres} onChange={setGenre} /><Select title="Длительность" value={maxRuntime} options={runtimes} onChange={setMaxRuntime} /></div>{room.me?.isHost ? <><button disabled={busy || (room.mode === 'couple' && room.members.length < 2)} onClick={() => onStart({ genre: genre || undefined, maxRuntime: maxRuntime ? Number(maxRuntime) : undefined })} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-black hover:bg-violet-400 disabled:opacity-50">{busy ? 'Подбираем…' : room.round ? 'Новый раунд' : 'Начать выбор'}</button>{room.mode === 'couple' && room.members.length < 2 && <p className="mt-2 text-sm text-amber-200">Ожидаем участника — отправь партнёру ссылку выше.</p>}</> : <p className="mt-4 text-sm text-violet-200">Ждём, пока ведущий начнёт раунд.</p>}</>}
-    {active && <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Раунд {room.round?.ordinal}</h2><p className="mt-1 text-sm text-slate-400">Все участники видят одинаковые фильмы.</p></div>{room.me?.isHost && <button disabled={busy} onClick={onCancel} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold hover:bg-white/8">Отменить раунд</button>}</div>}
-    {room.me?.isHost && <button disabled={busy} onClick={onClose} className="mt-5 text-xs font-semibold text-slate-500 hover:text-rose-300">Закрыть комнату</button>}
+    {active ? <div className="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 className="text-xl font-black">Раунд {room.round?.ordinal}{room.round?.blind ? ' · Слепой сеанс' : ''}</h2>
+        <p className="mt-1 text-sm text-slate-400">{room.round?.blind ? 'Голосуйте по намёкам. Разгадка ждёт в конце.' : 'Все участники видят одинаковые фильмы.'}</p>
+      </div>
+      {isHost && <button disabled={busy} onClick={onCancel} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold hover:bg-white/8">Отменить раунд</button>}
+    </div> : <>
+      <h2 className="text-xl font-black">Настроение вечера</h2>
+      <p className="mt-1 text-sm text-slate-400">Выбери историю и время — фильмы в раунде подстроятся под вас.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Select title="Жанр" value={genre} options={genres} onChange={setGenre} />
+        <Select title="Длительность" value={maxRuntime} options={runtimes} onChange={setMaxRuntime} />
+      </div>
+      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-violet-300/20 bg-violet-400/8 p-4">
+        <input type="checkbox" checked={blind} onChange={(event) => setBlind(event.target.checked)} disabled={!isHost} className="size-5 accent-violet-400" />
+        <span><span className="block text-sm font-black text-violet-100">Слепой сеанс ✦</span><span className="mt-1 block text-xs text-slate-400">Только намёки. Названия и постеры откроются после голосования.</span></span>
+      </label>
+      {isHost ? <>
+        <button disabled={busy || waiting} onClick={() => onStart({ genre: genre || undefined, maxRuntime: maxRuntime ? Number(maxRuntime) : undefined, blind })} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-black hover:bg-violet-400 disabled:opacity-50">{busy ? 'Подбираем…' : room.round ? 'Новый раунд' : 'Начать выбор'}</button>
+        {waiting && <p className="mt-2 text-sm text-amber-200">Ожидаем участника — отправь партнёру ссылку выше.</p>}
+      </> : <p className="mt-4 text-sm text-violet-200">Ждём, пока ведущий начнёт раунд.</p>}
+    </>}
+    {isHost && <button disabled={busy} onClick={onClose} className="mt-5 text-xs font-semibold text-slate-500 hover:text-rose-300">Закрыть комнату</button>}
   </section>
 }
 

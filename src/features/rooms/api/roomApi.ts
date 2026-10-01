@@ -1,9 +1,9 @@
-import type { CreateRoomInput, Mood, Room, VoteValue } from '../../../entities/room/model'
+import type { CreateRoomInput, Room, RoundSetup, VoteValue } from '../../../entities/room/model'
 
 export const createRoom = (input: CreateRoomInput) => requestRoom('/api/rooms', { method: 'POST', body: JSON.stringify(input) })
 export const getRoom = (id: string) => requestRoom(`/api/rooms/${id}`)
 export const joinRoom = (id: string, name: string) => requestRoom(`/api/rooms/${id}/join`, { method: 'POST', body: JSON.stringify({ name }) })
-export const startRound = (id: string, mood: Mood) => requestRoom(`/api/rooms/${id}/rounds`, { method: 'POST', body: JSON.stringify(mood) })
+export const startRound = (id: string, setup: RoundSetup) => requestRoom(`/api/rooms/${id}/rounds`, { method: 'POST', body: JSON.stringify(setup) })
 export const cancelRound = (id: string) => requestRoom(`/api/rooms/${id}/rounds/current`, { method: 'DELETE' })
 export const closeRoom = (id: string) => requestRoom(`/api/rooms/${id}/close`, { method: 'POST' })
 export const removeMember = (id: string, memberId: string) => requestRoom(`/api/rooms/${id}/members/${memberId}`, { method: 'DELETE' })
