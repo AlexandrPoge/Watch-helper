@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Room, RoundSetup } from '../../../entities/room/model'
+import { scrollToFocus } from '../../../shared/lib/scrollToFocus'
 import { RoomResult } from './RoomResult'
 
 const genres = [['', 'Любой жанр'], ['comedy', 'Комедия'], ['drama', 'Драма'], ['thriller', 'Триллер'], ['sciFi', 'Фантастика'], ['romance', 'Романтика'], ['horror', 'Ужасы']]
@@ -7,14 +8,23 @@ const runtimes = [['', 'Любая длительность'], ['90', 'До 1,5 
 type Props = { room: Room; busy: boolean; onStart: (setup: RoundSetup) => void; onCancel: () => void; onClose: () => void }
 
 export function RoomRoundControls({ room, busy, onStart, onCancel, onClose }: Props) {
+  const section = useRef<HTMLElement>(null)
+  const previousRound = useRef({ id: room.round?.id, status: room.round?.status })
   const [genre, setGenre] = useState('')
   const [maxRuntime, setMaxRuntime] = useState('')
   const [blind, setBlind] = useState(false)
   const active = room.round?.status === 'active'
   const isHost = Boolean(room.me?.isHost)
   const waiting = room.mode === 'couple' && room.members.length < 2
+  useEffect(() => {
+    const before = previousRound.current
+    previousRound.current = { id: room.round?.id, status: room.round?.status }
+    if (room.round?.status !== 'completed' || before.id !== room.round.id || before.status !== 'active') return
+    const frame = requestAnimationFrame(() => scrollToFocus(section.current))
+    return () => cancelAnimationFrame(frame)
+  }, [room.round?.id, room.round?.status])
 
-  return <section className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6">
+  return <section ref={section} className="mt-5 scroll-mt-24 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6">
     {room.round?.status === 'completed' && <RoomResult round={room.round} />}
     {active ? <div className="flex flex-wrap items-center justify-between gap-3">
       <div>

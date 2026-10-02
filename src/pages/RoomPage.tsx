@@ -30,11 +30,12 @@ export function RoomPage() {
   const kick = useMutation({ mutationFn: (id: string) => removeMember(roomId, id), onSuccess: save })
   const vote = useMutation({ mutationFn: ({ movieId, value }: { movieId: string; value: VoteValue }) => voteForMovie(roomId, movieId, value), onSuccess: save })
   const room = live.data
+  const pairVoting = room?.status === 'open' && room.mode === 'couple' && room.round?.status === 'active' && Boolean(room.me)
   const inviteUrl = `${share.data?.urls[0] ?? window.location.origin}/rooms/${roomId}`
   const error = [join, start, cancel, close, kick, vote].find((item) => item.isError)?.error
   return <main className="min-h-screen text-white">
     <AppHeader />
-    <div className="mx-auto max-w-5xl px-4 py-8 pb-28 sm:px-6 xl:px-8">
+    <div className={`mx-auto max-w-5xl px-4 py-8 sm:px-6 xl:px-8 ${pairVoting ? 'pb-72' : 'pb-28'}`}>
       {live.isLoading && <p className="text-slate-400">Загружаем кинокомнату…</p>}
       {live.isError && <p className="text-rose-300">Комната недоступна. Проверь соединение и обнови страницу.</p>}
       {room && <>
