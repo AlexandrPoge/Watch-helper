@@ -12,6 +12,7 @@ export function CatalogCard({ item, kind, saved, onSave }: Props) {
       <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-gradient-to-br from-violet-950 to-slate-950 shadow-xl shadow-black/20">
         {item.posterUrl ? <img src={mediaUrl(item.posterUrl)} alt={item.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-slate-600"><ImageOff size={30} /></div>}
         <div className="absolute inset-0 bg-gradient-to-t from-[#080810] via-transparent to-transparent opacity-90" />
+        {(item.originCountries?.includes('RU') || item.originCountries?.includes('SU')) && <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/65 px-2.5 py-1 text-[10px] font-black text-white">{item.originCountries.includes('RU') ? 'Россия' : 'СССР'}</span>}
         <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-lg bg-[#11111d]/90 px-2 py-1 text-xs font-black text-amber-300"><Star size={12} fill="currentColor" />{item.rating?.toFixed(1) ?? '—'}</span>
         <span className="absolute bottom-3 right-3 rounded-lg bg-white/12 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">{kind === 'movie' ? 'фильм' : 'сериал'}</span>
       </div>

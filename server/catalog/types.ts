@@ -13,6 +13,7 @@ export type CatalogItem = {
   rating?: number
   voteCount?: number
   genres?: string[]
+  originCountries?: string[]
   match: number
   sourceNames: string[]
 }

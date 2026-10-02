@@ -3,6 +3,7 @@ import { mergeCatalogItems } from './catalogService'
 import type { CatalogItem } from './types'
 import { sortCatalogItems, type BrowseFilters } from './browseFilters'
 import { tmdbGenreNames } from './tmdbGenres'
+import { countryCodesFor, countryNames } from './countries'
 
 export type SeriesFilters = BrowseFilters
 
@@ -17,8 +18,12 @@ const genreNames: Record<string, string> = {
 
 export async function browseSeries(filters: SeriesFilters) {
   const results = await Promise.allSettled([browseTmdb(filters), browsePoiskKino(filters)])
-  const items = results.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
-  return sortCatalogItems(mergeCatalogItems(items), filters.sort).slice(0, 36)
+  const sources = filters.country === 'RU' ? [results[1], results[0]] : results
+  const items = sources.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+  if (!items.length && results.some((result) => result.status === 'rejected')) throw new Error('Series providers unavailable')
+  const sorted = sortCatalogItems(mergeCatalogItems(items), filters.sort)
+  if (filters.country === 'RU' && (!filters.sort || filters.sort === 'popular')) sorted.sort((a, b) => Number(b.sourceNames.includes('PoiskKino')) - Number(a.sourceNames.includes('PoiskKino')))
+  return { items: sorted.slice(0, 36), partial: results.some((result) => result.status === 'rejected') }
 }
 
 async function browseTmdb(filters: SeriesFilters): Promise<CatalogItem[]> {
@@ -30,6 +35,7 @@ async function browseTmdb(filters: SeriesFilters): Promise<CatalogItem[]> {
   url.searchParams.set('api_key', env.tmdbApiKey)
   url.searchParams.set('sort_by', tmdbSort(filters.sort))
   if (filters.genre && genreIds[filters.genre]) url.searchParams.set('with_genres', String(genreIds[filters.genre]))
+  if (filters.country) url.searchParams.set('with_origin_country', filters.country)
   if (filters.year) url.searchParams.set('first_air_date_year', filters.year)
   if (filters.rating) url.searchParams.set('vote_average.gte', filters.rating)
   if (filters.sort === 'rating') url.searchParams.set('vote_count.gte', '200')
@@ -45,7 +51,10 @@ async function browsePoiskKino(filters: SeriesFilters): Promise<CatalogItem[]> {
   setCommon(url, filters)
   url.searchParams.set('isSeries', 'true')
   url.searchParams.set('notNullFields', 'poster.url')
+  url.searchParams.set('sortField', filters.sort === 'rating' ? 'rating.kp' : filters.sort === 'newest' ? 'year' : 'votes.kp')
+  url.searchParams.set('sortType', '-1')
   if (filters.genre && genreNames[filters.genre]) url.searchParams.set('genres.name', genreNames[filters.genre])
+  if (filters.country && countryNames[filters.country]) url.searchParams.set('countries.name', countryNames[filters.country])
   if (filters.year) url.searchParams.set('year', filters.year)
   if (filters.rating) url.searchParams.set('rating.kp', `${filters.rating}-10`)
   if (filters.sort === 'rating') url.searchParams.set('votes.kp', '200-10000000')
@@ -66,16 +75,16 @@ function tmdbSort(sort?: string) {
   return 'popularity.desc'
 }
 
-type TmdbSeries = { id: number; name: string; original_name?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; vote_average?: number; vote_count?: number; popularity?: number; genre_ids?: number[] }
-type PoiskSeries = { id: number; name?: string; alternativeName?: string; year?: number; description?: string; poster?: { url?: string }; backdrop?: { url?: string }; rating?: { kp?: number }; votes?: { kp?: number }; genres?: { name: string }[] }
+type TmdbSeries = { id: number; name: string; original_name?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; vote_average?: number; vote_count?: number; popularity?: number; genre_ids?: number[]; origin_country?: string[] }
+type PoiskSeries = { id: number; name?: string; alternativeName?: string; year?: number; description?: string; poster?: { url?: string }; backdrop?: { url?: string }; rating?: { kp?: number }; votes?: { kp?: number }; genres?: { name: string }[]; countries?: { name: string }[] }
 
 function mapTmdbSeries(item: TmdbSeries): CatalogItem {
-  return { id: `tmdb:series:${item.id}`, title: item.name, originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: image(item.poster_path, 'w500'), backdropUrl: image(item.backdrop_path, 'w1280'), rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.min(99, Math.max(50, Math.round(item.popularity ?? 60))), sourceNames: ['TMDB'] }
+  return { id: `tmdb:series:${item.id}`, title: item.name, originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: image(item.poster_path, 'w500'), backdropUrl: image(item.backdrop_path, 'w1280'), rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), originCountries: item.origin_country, match: Math.min(99, Math.max(50, Math.round(item.popularity ?? 60))), sourceNames: ['TMDB'] }
 }
 
 function mapPoiskSeries(item: PoiskSeries): CatalogItem {
   const popularity = Math.round(Math.log10((item.votes?.kp ?? 100) + 1) * 20)
-  return { id: `kinopoisk:series:${item.id}`, title: item.name ?? item.alternativeName ?? 'Без названия', originalTitle: item.alternativeName, kind: 'series', year: item.year, overview: item.description, posterUrl: item.poster?.url, backdropUrl: item.backdrop?.url, rating: item.rating?.kp, voteCount: item.votes?.kp, genres: item.genres?.map(({ name }) => name), match: Math.min(99, Math.max(50, popularity)), sourceNames: ['PoiskKino'] }
+  return { id: `kinopoisk:series:${item.id}`, title: item.name ?? item.alternativeName ?? 'Без названия', originalTitle: item.alternativeName, kind: 'series', year: item.year, overview: item.description, posterUrl: item.poster?.url, backdropUrl: item.backdrop?.url, rating: item.rating?.kp, voteCount: item.votes?.kp, genres: item.genres?.map(({ name }) => name), originCountries: countryCodesFor(item.countries), match: Math.min(99, Math.max(50, popularity)), sourceNames: ['PoiskKino'] }
 }
 
 const image = (path?: string, size = 'w500') => path ? `https://image.tmdb.org/t/p/${size}${path}` : undefined

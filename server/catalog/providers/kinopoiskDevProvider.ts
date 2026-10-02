@@ -1,5 +1,6 @@
 import { env } from '../../config/env'
 import type { CatalogItem, CatalogProvider, MediaKind } from '../types'
+import { countryCodesFor } from '../countries'
 
 type KinopoiskMovie = {
   id: number
@@ -13,6 +14,7 @@ type KinopoiskMovie = {
   rating?: { kp?: number }
   votes?: { kp?: number }
   genres?: { name: string }[]
+  countries?: { name: string }[]
 }
 
 type KinopoiskResponse = { docs: KinopoiskMovie[] }
@@ -46,6 +48,7 @@ function toCatalogItem(movie: KinopoiskMovie): CatalogItem {
     rating: movie.rating?.kp,
     voteCount: movie.votes?.kp,
     genres: movie.genres?.map(({ name }) => name),
+    originCountries: countryCodesFor(movie.countries),
     match: Math.round(Math.min(99, Math.max(50, (movie.rating?.kp ?? 5) * 10))),
     sourceNames: ['PoiskKino'],
   }

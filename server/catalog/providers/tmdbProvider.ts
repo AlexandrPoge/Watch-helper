@@ -17,6 +17,7 @@ type TmdbResult = {
   vote_average?: number
   vote_count?: number
   genre_ids?: number[]
+  origin_country?: string[]
   popularity: number
 }
 
@@ -53,6 +54,7 @@ function toCatalogItem(item: TmdbResult): CatalogItem {
     rating: item.vote_average,
     voteCount: item.vote_count,
     genres: tmdbGenreNames(item.genre_ids),
+    originCountries: item.origin_country,
     match: Math.min(99, Math.max(50, Math.round(item.popularity))),
     sourceNames: ['TMDB'],
   }

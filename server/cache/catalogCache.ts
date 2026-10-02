@@ -15,11 +15,12 @@ export const catalogCache: RequestHandler = (request, response, next) => {
   if (cached) cache.delete(key)
   const originalJson = response.json.bind(response)
   response.json = ((body: unknown) => {
-    if (response.statusCode === 200) {
+    if (response.statusCode === 200 && response.getHeader('X-Watchly-Partial') !== '1') {
       pruneCache()
       cache.set(key, { body, expiresAt: Date.now() + ttlFor(request.path) })
       response.set({ 'X-Watchly-Cache': 'MISS', 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' })
     }
+    if (response.getHeader('X-Watchly-Partial') === '1') response.set('Cache-Control', 'no-store')
     return originalJson(body)
   }) as typeof response.json
   return next()

@@ -9,6 +9,6 @@ export function useBrowseCatalog(kind: CatalogKind, filters: CatalogFilters, ena
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.items.length ? lastPage.page + 1 : undefined,
     enabled,
-    staleTime: 5 * 60_000,
+    staleTime: (query) => query.state.data?.pages.some((page) => page.partial) ? 30_000 : 5 * 60_000,
   })
 }

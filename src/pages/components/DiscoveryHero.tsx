@@ -16,6 +16,10 @@ export function DiscoveryHero({ query, onQueryChange }: DiscoveryHeroProps) {
           <input value={query} onChange={(event) => onQueryChange(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="Найти фильм, актёра или настроение..." />
           <Link to="/movies" aria-label="Открыть каталог с фильтрами" className="grid size-10 place-items-center rounded-xl bg-white text-slate-950 transition hover:bg-violet-200"><SlidersHorizontal size={17} /></Link>
         </label>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link to="/movies" className="inline-flex items-center gap-2 rounded-xl border border-violet-300/30 bg-violet-400/10 px-4 py-2.5 text-sm font-bold text-violet-100 transition hover:bg-violet-400/20">Открыть каталог фильмов <SlidersHorizontal size={16} /></Link>
+          <Link to="/movies?country=RU" className="inline-flex items-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-bold text-slate-300 transition hover:bg-white/8 hover:text-white">Российское кино</Link>
+        </div>
         <div className="mt-5 flex flex-wrap gap-2"><span className="text-sm text-slate-500">Попробуй:</span>{[['Интерстеллар', 'Что-то эпичное'], ['Друзья', 'На вечер с друзьями'], ['Том Хэнкс', 'Поиск по актёру']].map(([value, label]) => <button key={label} onClick={() => onQueryChange(value)} className="rounded-full bg-white/6 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/12">{label}</button>)}</div>
       </div>
       <CinemaScene />

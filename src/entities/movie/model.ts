@@ -12,6 +12,7 @@ export type Movie = {
   rating?: number
   voteCount?: number
   genres?: string[]
+  originCountries?: string[]
   accent?: string
   sourceNames?: string[]
 }

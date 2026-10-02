@@ -19,4 +19,8 @@ describe('watch options', () => {
       { name: 'IMDb', url: 'https://www.imdb.com/title/tt0042/' },
     ])
   })
+
+  it('не предлагает зарубежные площадки как доступные локально', () => {
+    expect(mapTmdbWatch({ US: { link: 'https://watch/us', flatrate: [{ provider_id: 3, provider_name: 'US Store' }] } })).toEqual([])
+  })
 })

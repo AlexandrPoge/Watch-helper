@@ -5,7 +5,8 @@ type Region = { link?: string; flatrate?: Provider[]; free?: Provider[]; ads?: P
 
 export function mapTmdbWatch(results?: Record<string, Region>): WatchOption[] {
   if (!results) return []
-  const regionCode = ['BY', 'RU', 'US'].find((code) => results[code]) ?? Object.keys(results)[0]
+  const regionCode = ['BY', 'RU'].find((code) => results[code]?.link)
+  if (!regionCode) return []
   const region = results[regionCode]
   if (!region?.link) return []
   const groups: [WatchOption['type'], Provider[] | undefined][] = [

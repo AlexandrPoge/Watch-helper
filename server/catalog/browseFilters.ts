@@ -2,6 +2,7 @@ import type { CatalogItem } from './types'
 
 export type BrowseFilters = {
   genre?: string
+  country?: string
   year?: string
   rating?: string
   sort?: 'popular' | 'rating' | 'newest'

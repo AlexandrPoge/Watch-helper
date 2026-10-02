@@ -27,6 +27,7 @@ export function mergeCatalogItems(items: CatalogItem[]) {
       match: Math.max(savedItem.match, item.match),
       posterUrl: savedItem.posterUrl ?? item.posterUrl,
       overview: savedItem.overview ?? item.overview,
+      originCountries: [...new Set([...(savedItem.originCountries ?? []), ...(item.originCountries ?? [])])],
       sourceNames: [...new Set([...savedItem.sourceNames, ...item.sourceNames])],
     })
   })

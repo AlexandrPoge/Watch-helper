@@ -13,6 +13,7 @@ const genreNames: Record<string, string[]> = {
 export function filterSearchResults(items: Movie[], kind: CatalogKind, filters: CatalogFilters) {
   const filtered = items.filter((item) => {
     if ((item.kind ?? 'movie') !== kind) return false
+    if (filters.country && !item.originCountries?.includes(filters.country)) return false
     if (filters.year && String(item.year) !== filters.year) return false
     if (filters.rating && (item.rating ?? 0) < Number(filters.rating)) return false
     const aliases = genreNames[filters.genre]

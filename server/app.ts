@@ -10,6 +10,7 @@ import { networkRouter } from './network/networkRoutes'
 import { imageProxyRouter } from './media/imageProxyRoutes'
 import { roomRouter } from './rooms/roomRoutes'
 import { catalogCache } from './cache/catalogCache'
+import { countryNames } from './catalog/countries'
 
 export const app = express()
 
@@ -35,13 +36,17 @@ app.get('/api/movies/search', async (request, response) => {
 })
 
 app.get('/api/movies', async (request, response) => {
+  const country = stringParam(request.query.country)
   const filters: SeriesFilters = {
     genre: stringParam(request.query.genre), year: stringParam(request.query.year),
+    country: country && countryNames[country] ? country : undefined,
     rating: stringParam(request.query.rating), sort: sortParam(request.query.sort),
     page: Math.max(1, Number(request.query.page) || 1),
   }
   try {
-    return response.json({ items: await browseMovies(filters), page: filters.page })
+    const catalog = await browseMovies(filters)
+    if (catalog.partial) response.set('X-Watchly-Partial', '1')
+    return response.json({ ...catalog, page: filters.page })
   } catch (error) {
     console.error('Movie catalog failed', error)
     return response.status(502).json({ message: 'Movie providers are temporarily unavailable.' })
@@ -49,13 +54,17 @@ app.get('/api/movies', async (request, response) => {
 })
 
 app.get('/api/series', async (request, response) => {
+  const country = stringParam(request.query.country)
   const filters: SeriesFilters = {
     genre: stringParam(request.query.genre), year: stringParam(request.query.year),
+    country: country && countryNames[country] ? country : undefined,
     rating: stringParam(request.query.rating), sort: sortParam(request.query.sort),
     page: Math.max(1, Number(request.query.page) || 1),
   }
   try {
-    return response.json({ items: await browseSeries(filters), page: filters.page })
+    const catalog = await browseSeries(filters)
+    if (catalog.partial) response.set('X-Watchly-Partial', '1')
+    return response.json({ ...catalog, page: filters.page })
   } catch (error) {
     console.error('Series catalog failed', error)
     return response.status(502).json({ message: 'Series providers are temporarily unavailable.' })
