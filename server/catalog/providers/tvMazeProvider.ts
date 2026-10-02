@@ -9,6 +9,7 @@ type TvMazeSearchResult = {
     summary?: string
     image?: { medium?: string }
     averageRuntime?: number
+    genres?: string[]
   }
 }
 
@@ -28,6 +29,7 @@ export const tvMazeProvider: CatalogProvider = {
       year: show.premiered ? Number.parseInt(show.premiered, 10) : undefined,
       duration: show.averageRuntime ? `${show.averageRuntime} мин` : undefined,
       overview: show.summary?.replace(/<[^>]*>/g, ''),
+      genres: show.genres,
       posterUrl: show.image?.medium,
       match: Math.round(Math.min(99, Math.max(50, score * 100))),
       sourceNames: ['TVmaze'],

@@ -2,6 +2,7 @@ import express from 'express'
 import { getCatalogStatus, searchCatalog } from './catalog/catalogService'
 import { getSeriesDetails } from './catalog/seriesDetailsService'
 import { browseSeries, type SeriesFilters } from './catalog/seriesService'
+import { browseMovies } from './catalog/movieBrowseService'
 import { getMovieDetails } from './catalog/movieDetailsService'
 import { getPersonDetails, searchPeople } from './catalog/peopleService'
 import { getRandomMovie } from './catalog/randomMovieService'
@@ -33,6 +34,20 @@ app.get('/api/movies/search', async (request, response) => {
   }
 })
 
+app.get('/api/movies', async (request, response) => {
+  const filters: SeriesFilters = {
+    genre: stringParam(request.query.genre), year: stringParam(request.query.year),
+    rating: stringParam(request.query.rating), sort: sortParam(request.query.sort),
+    page: Math.max(1, Number(request.query.page) || 1),
+  }
+  try {
+    return response.json({ items: await browseMovies(filters), page: filters.page })
+  } catch (error) {
+    console.error('Movie catalog failed', error)
+    return response.status(502).json({ message: 'Movie providers are temporarily unavailable.' })
+  }
+})
+
 app.get('/api/series', async (request, response) => {
   const filters: SeriesFilters = {
     genre: stringParam(request.query.genre), year: stringParam(request.query.year),
@@ -59,7 +74,8 @@ app.get('/api/series/:catalogId', async (request, response) => {
 
 app.get('/api/movies/random', async (request, response) => {
   try {
-    const item = await getRandomMovie({ genre: stringParam(request.query.genre), maxRuntime: Number(request.query.maxRuntime) || undefined })
+    const kind = request.query.kind === 'animation' || request.query.kind === 'series' ? request.query.kind : 'movie'
+    const item = await getRandomMovie({ kind, genre: stringParam(request.query.genre), maxRuntime: Number(request.query.maxRuntime) || undefined, excludeId: stringParam(request.query.excludeId) })
     return item ? response.json({ item }) : response.status(404).json({ message: 'Movie not found.' })
   } catch (error) {
     console.error('Random movie failed', error)

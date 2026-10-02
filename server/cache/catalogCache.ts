@@ -27,7 +27,7 @@ export const catalogCache: RequestHandler = (request, response, next) => {
 
 export function isCacheableApiPath(path: string) {
   if (path === '/api/movies/random') return false
-  return path.startsWith('/api/movies/search') || path.startsWith('/api/movies/') || path.startsWith('/api/series') || path.startsWith('/api/people')
+  return path === '/api/movies' || path.startsWith('/api/movies/search') || path.startsWith('/api/movies/') || path.startsWith('/api/series') || path.startsWith('/api/people')
 }
 
 function ttlFor(path: string) {

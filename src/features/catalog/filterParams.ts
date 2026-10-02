@@ -1,7 +1,6 @@
-import type { SeriesFilters } from './model'
-import { defaultSeriesFilters } from './model'
+import { defaultCatalogFilters, type CatalogFilters } from './model'
 
-export function readSeriesFilters(params: URLSearchParams): SeriesFilters {
+export function readCatalogFilters(params: URLSearchParams): CatalogFilters {
   const sort = params.get('sort')
   return {
     genre: params.get('genre') ?? '',
@@ -11,12 +10,12 @@ export function readSeriesFilters(params: URLSearchParams): SeriesFilters {
   }
 }
 
-export function writeSeriesParams(filters: SeriesFilters, search: string) {
+export function writeCatalogParams(filters: CatalogFilters, query: string) {
   const params = new URLSearchParams()
-  if (search) params.set('q', search)
+  if (query) params.set('q', query)
   for (const key of ['genre', 'year', 'rating'] as const) {
     if (filters[key]) params.set(key, filters[key])
   }
-  if (filters.sort !== defaultSeriesFilters.sort) params.set('sort', filters.sort)
+  if (filters.sort !== defaultCatalogFilters.sort) params.set('sort', filters.sort)
   return params
 }

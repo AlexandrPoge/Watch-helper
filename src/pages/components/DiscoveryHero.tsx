@@ -14,7 +14,7 @@ export function DiscoveryHero({ query, onQueryChange }: DiscoveryHeroProps) {
         <label className="tech-panel group mt-8 flex max-w-xl items-center gap-3 rounded-2xl border border-white/10 bg-white/7 p-2 pl-4 shadow-2xl shadow-black/20 transition focus-within:border-violet-300/50 focus-within:bg-white/10">
           <Search size={20} className="text-slate-500 group-focus-within:text-violet-300" />
           <input value={query} onChange={(event) => onQueryChange(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="Найти фильм, актёра или настроение..." />
-          <Link to="/series" aria-label="Открыть каталог с фильтрами" className="grid size-10 place-items-center rounded-xl bg-white text-slate-950 transition hover:bg-violet-200"><SlidersHorizontal size={17} /></Link>
+          <Link to="/movies" aria-label="Открыть каталог с фильтрами" className="grid size-10 place-items-center rounded-xl bg-white text-slate-950 transition hover:bg-violet-200"><SlidersHorizontal size={17} /></Link>
         </label>
         <div className="mt-5 flex flex-wrap gap-2"><span className="text-sm text-slate-500">Попробуй:</span>{[['Интерстеллар', 'Что-то эпичное'], ['Друзья', 'На вечер с друзьями'], ['Том Хэнкс', 'Поиск по актёру']].map(([value, label]) => <button key={label} onClick={() => onQueryChange(value)} className="rounded-full bg-white/6 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/12">{label}</button>)}</div>
       </div>

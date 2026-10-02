@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 
 const items = [
   { to: '/', label: 'Главная', icon: Home, end: true },
-  { to: '/series', label: 'Каталог', icon: Library },
+  { to: '/movies', label: 'Каталог', icon: Library },
   { to: '/random', label: 'Выбрать', icon: Dices },
   { to: '/rooms/new', label: 'Вместе', icon: UsersRound },
   { to: '/profile', label: 'Профиль', icon: UserRound },

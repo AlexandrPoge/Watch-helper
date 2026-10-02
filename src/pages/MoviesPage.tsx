@@ -1,5 +1,5 @@
 import { CatalogPage } from '../features/catalog/components/CatalogPage'
 
-export function SeriesPage() {
-  return <CatalogPage kind="series" />
+export function MoviesPage() {
+  return <CatalogPage kind="movie" />
 }

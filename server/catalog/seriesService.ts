@@ -1,14 +1,10 @@
 import { env } from '../config/env'
 import { mergeCatalogItems } from './catalogService'
 import type { CatalogItem } from './types'
+import { sortCatalogItems, type BrowseFilters } from './browseFilters'
+import { tmdbGenreNames } from './tmdbGenres'
 
-export type SeriesFilters = {
-  genre?: string
-  year?: string
-  rating?: string
-  sort?: 'popular' | 'rating' | 'newest'
-  page?: number
-}
+export type SeriesFilters = BrowseFilters
 
 const genreIds: Record<string, number> = {
   comedy: 35, crime: 80, documentary: 99, drama: 18, fantasy: 10765,
@@ -22,7 +18,7 @@ const genreNames: Record<string, string> = {
 export async function browseSeries(filters: SeriesFilters) {
   const results = await Promise.allSettled([browseTmdb(filters), browsePoiskKino(filters)])
   const items = results.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
-  return sortSeries(mergeCatalogItems(items), filters.sort ?? 'popular').slice(0, 36)
+  return sortCatalogItems(mergeCatalogItems(items), filters.sort).slice(0, 36)
 }
 
 async function browseTmdb(filters: SeriesFilters): Promise<CatalogItem[]> {
@@ -70,19 +66,11 @@ function tmdbSort(sort?: string) {
   return 'popularity.desc'
 }
 
-function sortSeries(items: CatalogItem[], sort: string) {
-  return [...items].sort((a, b) => {
-    if (sort === 'newest') return (b.year ?? 0) - (a.year ?? 0)
-    if (sort === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
-    return b.match - a.match
-  })
-}
-
-type TmdbSeries = { id: number; name: string; original_name?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; vote_average?: number; vote_count?: number; popularity?: number }
+type TmdbSeries = { id: number; name: string; original_name?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; vote_average?: number; vote_count?: number; popularity?: number; genre_ids?: number[] }
 type PoiskSeries = { id: number; name?: string; alternativeName?: string; year?: number; description?: string; poster?: { url?: string }; backdrop?: { url?: string }; rating?: { kp?: number }; votes?: { kp?: number }; genres?: { name: string }[] }
 
 function mapTmdbSeries(item: TmdbSeries): CatalogItem {
-  return { id: `tmdb:series:${item.id}`, title: item.name, originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: image(item.poster_path, 'w500'), backdropUrl: image(item.backdrop_path, 'w1280'), rating: item.vote_average, voteCount: item.vote_count, match: Math.min(99, Math.max(50, Math.round(item.popularity ?? 60))), sourceNames: ['TMDB'] }
+  return { id: `tmdb:series:${item.id}`, title: item.name, originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: image(item.poster_path, 'w500'), backdropUrl: image(item.backdrop_path, 'w1280'), rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.min(99, Math.max(50, Math.round(item.popularity ?? 60))), sourceNames: ['TMDB'] }
 }
 
 function mapPoiskSeries(item: PoiskSeries): CatalogItem {

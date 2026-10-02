@@ -12,7 +12,7 @@ export function AppHeader() {
     <header className="tech-header sticky top-0 z-30 border-b border-white/7 bg-[#090914]/70 backdrop-blur-2xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-18 sm:px-6 xl:px-8">
         <Logo />
-        <div className="hidden items-center gap-5 text-sm font-medium text-slate-400 xl:flex"><HeaderLink to="/">Для тебя</HeaderLink><HeaderLink to="/series">Сериалы</HeaderLink><HeaderLink to="/random">Случайный выбор</HeaderLink><HeaderLink to="/rooms/new">Комнаты</HeaderLink><HeaderLink to="/profile">Профиль</HeaderLink></div>
+        <div className="hidden items-center gap-5 text-sm font-medium text-slate-400 xl:flex"><HeaderLink to="/">Для тебя</HeaderLink><HeaderLink to="/movies">Фильмы</HeaderLink><HeaderLink to="/series">Сериалы</HeaderLink><HeaderLink to="/random">Случайный выбор</HeaderLink><HeaderLink to="/rooms/new">Комнаты</HeaderLink><HeaderLink to="/profile">Профиль</HeaderLink></div>
         <div className="flex items-center gap-2">
           <Link className="interactive-control hidden rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-bold shadow-lg shadow-violet-500/20 hover:bg-violet-400 lg:block" to="/rooms/new">Создать комнату</Link>
           <button onClick={toggleEffects} aria-label={lessEffects ? 'Включить эффекты' : 'Меньше эффектов'} aria-pressed={lessEffects} title={lessEffects ? 'Включить эффекты' : 'Меньше эффектов'} className="interactive-control grid size-10 place-items-center rounded-xl text-slate-300 hover:bg-white/8"><Sparkles size={18} /></button>

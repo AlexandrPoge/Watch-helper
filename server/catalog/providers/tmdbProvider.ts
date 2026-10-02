@@ -1,5 +1,6 @@
 import { env } from '../../config/env'
 import type { CatalogItem, CatalogProvider, MediaKind } from '../types'
+import { tmdbGenreNames } from '../tmdbGenres'
 
 type TmdbResult = {
   id: number
@@ -51,6 +52,7 @@ function toCatalogItem(item: TmdbResult): CatalogItem {
     backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined,
     rating: item.vote_average,
     voteCount: item.vote_count,
+    genres: tmdbGenreNames(item.genre_ids),
     match: Math.min(99, Math.max(50, Math.round(item.popularity))),
     sourceNames: ['TMDB'],
   }

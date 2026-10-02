@@ -9,6 +9,7 @@ const CreateRoomPage = lazy(() => import('../pages/CreateRoomPage').then((module
 const RoomPage = lazy(() => import('../pages/RoomPage').then((module) => ({ default: module.RoomPage })))
 const SeriesDetailsPage = lazy(() => import('../pages/SeriesDetailsPage').then((module) => ({ default: module.SeriesDetailsPage })))
 const SeriesPage = lazy(() => import('../pages/SeriesPage').then((module) => ({ default: module.SeriesPage })))
+const MoviesPage = lazy(() => import('../pages/MoviesPage').then((module) => ({ default: module.MoviesPage })))
 const MovieDetailsPage = lazy(() => import('../pages/MovieDetailsPage').then((module) => ({ default: module.MovieDetailsPage })))
 const PersonPage = lazy(() => import('../pages/PersonPage').then((module) => ({ default: module.PersonPage })))
 const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
@@ -25,10 +26,11 @@ function AnimatedRoutes() {
   const location = useLocation()
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  }, [location.pathname, location.search])
+  }, [location.pathname])
   return <div key={location.pathname} className="page-transition"><Suspense fallback={<div className="min-h-screen p-8 text-sm text-slate-400">Загружаем страницу…</div>}><Routes location={location}>
       <Route path="/" element={<HomePage />} />
       <Route path="/series" element={<SeriesPage />} />
+      <Route path="/movies" element={<MoviesPage />} />
       <Route path="/series/:catalogId" element={<SeriesDetailsPage />} />
       <Route path="/movies/:catalogId" element={<MovieDetailsPage />} />
       <Route path="/people/:catalogId" element={<PersonPage />} />

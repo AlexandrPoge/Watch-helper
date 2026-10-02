@@ -1,27 +1,24 @@
 import { env } from '../config/env'
 import type { CatalogItem } from './types'
+import { movieGenres, randomDiscoverUrl, type RandomFilters } from './randomDiscover'
+import { tmdbGenreNames } from './tmdbGenres'
 
 export type RandomMovieFilters = { genre?: string; maxRuntime?: number }
-const genreIds: Record<string, number> = { action: 28, comedy: 35, drama: 18, fantasy: 14, horror: 27, romance: 10749, sciFi: 878, thriller: 53 }
-const genreNames: Record<number, string> = { 12: 'Приключения', 14: 'Фэнтези', 16: 'Анимация', 18: 'Драма', 27: 'Ужасы', 28: 'Боевик', 35: 'Комедия', 36: 'История', 53: 'Триллер', 80: 'Криминал', 99: 'Документальный', 878: 'Фантастика', 9648: 'Детектив', 10749: 'Романтика', 10751: 'Семейный' }
 
-export async function getRandomMovie(filters: RandomMovieFilters): Promise<CatalogItem | null> {
+export async function getRandomMovie(filters: RandomFilters & { excludeId?: string }): Promise<CatalogItem | null> {
   if (!env.tmdbApiKey) return null
-  const url = new URL('https://api.themoviedb.org/3/discover/movie')
-  url.searchParams.set('api_key', env.tmdbApiKey)
-  url.searchParams.set('language', 'ru-RU')
-  url.searchParams.set('include_adult', 'false')
-  url.searchParams.set('sort_by', 'popularity.desc')
-  url.searchParams.set('vote_average.gte', '6.5')
-  url.searchParams.set('vote_count.gte', '300')
-  url.searchParams.set('page', String(1 + Math.floor(Math.random() * 20)))
-  if (filters.genre && genreIds[filters.genre]) url.searchParams.set('with_genres', String(genreIds[filters.genre]))
-  if (filters.maxRuntime) url.searchParams.set('with_runtime.lte', String(filters.maxRuntime))
+  const page = 1 + Math.floor(Math.random() * 20)
+  const items = await discover(randomDiscoverUrl(env.tmdbApiKey, filters, page))
+  const pool = items.length ? items : page === 1 ? [] : await discover(randomDiscoverUrl(env.tmdbApiKey, filters, 1))
+  const alternatives = pool.filter((item) => `tmdb:${filters.kind === 'series' ? 'series' : 'movie'}:${item.id}` !== filters.excludeId)
+  const item = (alternatives.length ? alternatives : pool)[Math.floor(Math.random() * (alternatives.length || pool.length))]
+  return item ? filters.kind === 'series' ? mapSeries(item) : mapMovie(item) : null
+}
+
+async function discover(url: URL): Promise<TmdbItem[]> {
   const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
   if (!response.ok) throw new Error(`TMDB returned ${response.status}`)
-  const data = await response.json() as { results: TmdbMovie[] }
-  const item = data.results[Math.floor(Math.random() * data.results.length)]
-  return item ? mapMovie(item) : null
+  return (await response.json() as { results: TmdbItem[] }).results ?? []
 }
 
 export async function getVotingMovies(count = 10, filters: RandomMovieFilters = {}) {
@@ -33,7 +30,7 @@ export async function getVotingMovies(count = 10, filters: RandomMovieFilters = 
   url.searchParams.set('vote_average.gte', '6.5')
   url.searchParams.set('vote_count.gte', '300')
   url.searchParams.set('page', String(1 + Math.floor(Math.random() * 15)))
-  if (filters.genre && genreIds[filters.genre]) url.searchParams.set('with_genres', String(genreIds[filters.genre]))
+  if (filters.genre && movieGenres[filters.genre]) url.searchParams.set('with_genres', String(movieGenres[filters.genre]))
   if (filters.maxRuntime) url.searchParams.set('with_runtime.lte', String(filters.maxRuntime))
   const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
   if (!response.ok) return []
@@ -48,8 +45,13 @@ export async function getVotingMovies(count = 10, filters: RandomMovieFilters = 
   return shuffled.slice(0, count).map(mapMovie)
 }
 
-function mapMovie(item: TmdbMovie): CatalogItem {
-  return { id: `tmdb:movie:${item.id}`, title: item.title, originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: item.genre_ids?.flatMap((id) => genreNames[id] ? [genreNames[id]] : []), match: Math.round(item.vote_average * 10), sourceNames: ['TMDB'] }
+function mapMovie(item: TmdbItem): CatalogItem {
+  return { id: `tmdb:movie:${item.id}`, title: item.title ?? 'Без названия', originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
 }
 
-type TmdbMovie = { id: number; title: string; original_title?: string; release_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; genre_ids?: number[]; vote_average: number; vote_count?: number }
+function mapSeries(item: TmdbItem): CatalogItem {
+  return { id: `tmdb:series:${item.id}`, title: item.name ?? 'Без названия', originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
+}
+
+type TmdbItem = { id: number; title?: string; name?: string; original_title?: string; original_name?: string; release_date?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; genre_ids?: number[]; vote_average?: number; vote_count?: number }
+type TmdbMovie = TmdbItem
