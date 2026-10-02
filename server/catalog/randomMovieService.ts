@@ -2,17 +2,26 @@ import { env } from '../config/env'
 import type { CatalogItem } from './types'
 import { movieGenres, randomDiscoverUrl, type RandomFilters } from './randomDiscover'
 import { tmdbGenreNames } from './tmdbGenres'
+import { getRandomPoisk } from './randomPoisk'
 
 export type RandomMovieFilters = { genre?: string; maxRuntime?: number }
 
 export async function getRandomMovie(filters: RandomFilters & { excludeId?: string }): Promise<CatalogItem | null> {
+  if ((filters.country === 'RU' || filters.country === 'SU') && env.kinopoiskDevToken) {
+    try {
+      const item = await getRandomPoisk(filters, env.kinopoiskDevToken)
+      if (item) return item
+    } catch (error) {
+      console.warn('PoiskKino random unavailable', error)
+    }
+  }
   if (!env.tmdbApiKey) return null
   const page = 1 + Math.floor(Math.random() * 20)
   const items = await discover(randomDiscoverUrl(env.tmdbApiKey, filters, page))
   const pool = items.length ? items : page === 1 ? [] : await discover(randomDiscoverUrl(env.tmdbApiKey, filters, 1))
   const alternatives = pool.filter((item) => `tmdb:${filters.kind === 'series' ? 'series' : 'movie'}:${item.id}` !== filters.excludeId)
   const item = (alternatives.length ? alternatives : pool)[Math.floor(Math.random() * (alternatives.length || pool.length))]
-  return item ? filters.kind === 'series' ? mapSeries(item) : mapMovie(item) : null
+  return item ? filters.kind === 'series' ? mapSeries(item) : mapMovie(item, filters.country) : null
 }
 
 async function discover(url: URL): Promise<TmdbItem[]> {
@@ -42,16 +51,16 @@ export async function getVotingMovies(count = 10, filters: RandomMovieFilters = 
     shuffled[index] = shuffled[swap]
     shuffled[swap] = item
   }
-  return shuffled.slice(0, count).map(mapMovie)
+  return shuffled.slice(0, count).map((item) => mapMovie(item))
 }
 
-function mapMovie(item: TmdbItem): CatalogItem {
-  return { id: `tmdb:movie:${item.id}`, title: item.title ?? 'Без названия', originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
+function mapMovie(item: TmdbItem, country?: string): CatalogItem {
+  return { id: `tmdb:movie:${item.id}`, title: item.title ?? 'Без названия', originalTitle: item.original_title, kind: 'movie', year: Number(item.release_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), originCountries: country ? [country] : undefined, match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
 }
 
 function mapSeries(item: TmdbItem): CatalogItem {
-  return { id: `tmdb:series:${item.id}`, title: item.name ?? 'Без названия', originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
+  return { id: `tmdb:series:${item.id}`, title: item.name ?? 'Без названия', originalTitle: item.original_name, kind: 'series', year: Number(item.first_air_date?.slice(0, 4)) || undefined, overview: item.overview, posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : undefined, backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : undefined, rating: item.vote_average, voteCount: item.vote_count, genres: tmdbGenreNames(item.genre_ids), originCountries: item.origin_country, match: Math.round((item.vote_average ?? 6) * 10), sourceNames: ['TMDB'] }
 }
 
-type TmdbItem = { id: number; title?: string; name?: string; original_title?: string; original_name?: string; release_date?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; genre_ids?: number[]; vote_average?: number; vote_count?: number }
+type TmdbItem = { id: number; title?: string; name?: string; original_title?: string; original_name?: string; release_date?: string; first_air_date?: string; overview?: string; poster_path?: string; backdrop_path?: string; genre_ids?: number[]; origin_country?: string[]; vote_average?: number; vote_count?: number }
 type TmdbMovie = TmdbItem

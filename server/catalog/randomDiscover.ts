@@ -1,5 +1,5 @@
 export type RandomKind = 'movie' | 'animation' | 'series'
-export type RandomFilters = { kind?: RandomKind; genre?: string; maxRuntime?: number }
+export type RandomFilters = { kind?: RandomKind; genre?: string; country?: string; maxRuntime?: number }
 
 export const movieGenres: Record<string, number> = { action: 28, comedy: 35, drama: 18, fantasy: 14, horror: 27, romance: 10749, sciFi: 878, thriller: 53 }
 const seriesGenres: Record<string, number> = { action: 10759, comedy: 35, drama: 18, fantasy: 10765, horror: 9648, romance: 10749, sciFi: 10765, thriller: 9648 }
@@ -18,6 +18,7 @@ export function randomDiscoverUrl(apiKey: string, filters: RandomFilters, page: 
   if (kind === 'animation') url.searchParams.set('with_genres', genre ? `16,${genre}` : '16')
   else if (genre) url.searchParams.set('with_genres', String(genre))
   if (kind === 'movie') url.searchParams.set('without_genres', '16')
+  if (filters.country) url.searchParams.set('with_origin_country', filters.country)
   if (filters.maxRuntime) url.searchParams.set('with_runtime.lte', String(filters.maxRuntime))
   return url
 }

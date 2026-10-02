@@ -13,10 +13,11 @@ describe('random discovery', () => {
   })
 
   it('uses TV discovery and runtime for series', () => {
-    const series = randomDiscoverUrl('key', { kind: 'series', genre: 'fantasy', maxRuntime: 60 }, 2)
+    const series = randomDiscoverUrl('key', { kind: 'series', genre: 'fantasy', country: 'RU', maxRuntime: 60 }, 2)
     expect(series.pathname).toBe('/3/discover/tv')
     expect(series.searchParams.get('with_genres')).toBe('10765')
     expect(series.searchParams.get('with_runtime.lte')).toBe('60')
     expect(series.searchParams.get('page')).toBe('2')
+    expect(series.searchParams.get('with_origin_country')).toBe('RU')
   })
 })

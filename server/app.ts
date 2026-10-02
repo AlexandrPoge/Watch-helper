@@ -84,7 +84,8 @@ app.get('/api/series/:catalogId', async (request, response) => {
 app.get('/api/movies/random', async (request, response) => {
   try {
     const kind = request.query.kind === 'animation' || request.query.kind === 'series' ? request.query.kind : 'movie'
-    const item = await getRandomMovie({ kind, genre: stringParam(request.query.genre), maxRuntime: Number(request.query.maxRuntime) || undefined, excludeId: stringParam(request.query.excludeId) })
+    const country = stringParam(request.query.country)
+    const item = await getRandomMovie({ kind, genre: stringParam(request.query.genre), country: country && countryNames[country] ? country : undefined, maxRuntime: Number(request.query.maxRuntime) || undefined, excludeId: stringParam(request.query.excludeId) })
     return item ? response.json({ item }) : response.status(404).json({ message: 'Movie not found.' })
   } catch (error) {
     console.error('Random movie failed', error)

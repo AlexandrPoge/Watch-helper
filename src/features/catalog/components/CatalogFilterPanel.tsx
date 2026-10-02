@@ -1,13 +1,13 @@
 import { RotateCcw, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { countryOptions } from '../../../shared/constants/countries'
 import type { CatalogFilters, CatalogKind } from '../model'
 
 type Props = { kind: CatalogKind; filters: CatalogFilters; query: string; onChange: (next: CatalogFilters) => void; onSearch: (query: string) => void; onReset: () => void }
 type Option = [string, string]
 const commonGenres: Option[] = [['', 'Любой жанр'], ['drama', 'Драма'], ['comedy', 'Комедия'], ['thriller', 'Триллер'], ['fantasy', 'Фэнтези'], ['sciFi', 'Фантастика'], ['romance', 'Мелодрама'], ['crime', 'Криминал'], ['documentary', 'Документальный']]
 const movieGenres: Option[] = [...commonGenres, ['action', 'Боевик'], ['horror', 'Ужасы'], ['animation', 'Анимация']]
-const countries: Option[] = [['', 'Любая страна'], ['RU', 'Россия'], ['SU', 'СССР'], ['US', 'США'], ['GB', 'Великобритания'], ['FR', 'Франция'], ['DE', 'Германия'], ['JP', 'Япония'], ['KR', 'Южная Корея'], ['IN', 'Индия'], ['CN', 'Китай'], ['CA', 'Канада']]
 const years: Option[] = [['', 'Любой год'], ...Array.from({ length: 47 }, (_, index) => { const year = String(new Date().getFullYear() - index); return [year, year] as Option })]
 const ratings: Option[] = [['', 'Любая оценка'], ['6', 'От 6'], ['7', 'От 7'], ['8', 'От 8'], ['9', 'От 9']]
 const sorts: Option[] = [['popular', 'Популярные'], ['rating', 'По оценке'], ['newest', 'Новые']]
@@ -34,7 +34,7 @@ export function CatalogFilterPanel({ kind, filters, query, onChange, onSearch, o
     </form>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <Select label="Жанр" value={filters.genre} options={kind === 'movie' ? movieGenres : commonGenres} onChange={(value) => update('genre', value)} />
-      <Select label="Страна производства" value={filters.country} options={countries} onChange={(value) => update('country', value)} />
+      <Select label="Страна производства" value={filters.country} options={countryOptions} onChange={(value) => update('country', value)} />
       <Select label={kind === 'movie' ? 'Год выпуска' : 'Год первого сезона'} value={filters.year} options={years} onChange={(value) => update('year', value)} />
       <Select label="Оценка не ниже" value={filters.rating} options={ratings} onChange={(value) => update('rating', value)} />
     </div>
