@@ -1,4 +1,8 @@
 import express from 'express'
+import { errorHandler, notFound } from './http/errors'
+import { validateQuery } from './http/validateQuery'
+import { rateLimit } from 'express-rate-limit'
+import { pool } from './db/pool'
 import { getCatalogStatus, searchCatalog } from './catalog/catalogService'
 import { getSeriesDetails } from './catalog/seriesDetailsService'
 import { browseSeries, type SeriesFilters } from './catalog/seriesService'
@@ -14,11 +18,24 @@ import { countryNames } from './catalog/countries'
 
 export const app = express()
 
-app.use(express.json())
+app.disable('x-powered-by')
+if (process.env.BEHIND_PROXY === '1') app.set('trust proxy', 1)
+app.get(['/health', '/api/health'], (_, response) => response.json({ status: 'ok' }))
+app.get('/api/ready', async (_, response) => {
+  try {
+    await pool.query('SELECT 1')
+    response.json({ status: 'ready' })
+  } catch {
+    response.status(503).json({ status: 'unavailable' })
+  }
+})
+app.use('/api', rateLimit({
+  windowMs: 60_000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false,
+  message: { message: 'Слишком много запросов. Попробуйте через минуту.' },
+}))
+app.use(express.json({ limit: '32kb' }))
 app.use(catalogCache)
-
-app.get('/api/health', (_, response) => response.json({ status: 'ok' }))
-
+app.use(['/api/movies', '/api/series'], validateQuery)
 app.get('/api/catalog/status', (_, response) => {
   response.json({ providers: getCatalogStatus() })
 })
@@ -127,6 +144,8 @@ app.get('/api/people/:catalogId', async (request, response) => {
 app.use(roomRouter)
 app.use(networkRouter)
 app.use(imageProxyRouter)
+app.use('/api', notFound)
+app.use(errorHandler)
 
 const stringParam = (value: unknown) => typeof value === 'string' && value ? value : undefined
 const sortParam = (value: unknown): SeriesFilters['sort'] => ['popular', 'rating', 'newest'].includes(String(value)) ? value as SeriesFilters['sort'] : 'popular'

@@ -38,13 +38,14 @@ async function browseTmdb(filters: BrowseFilters): Promise<CatalogItem[]> {
   return (await response.json() as { results: TmdbMovie[] }).results.map((item) => mapTmdb(item, filters.country))
 }
 
-async function browsePoisk(filters: BrowseFilters): Promise<CatalogItem[]> {
+export async function browsePoisk(filters: BrowseFilters, maxRuntime?: number): Promise<CatalogItem[]> {
   if (!env.kinopoiskDevToken) return []
   const url = new URL('https://api.poiskkino.dev/v1.4/movie')
   url.searchParams.set('page', String(filters.page ?? 1))
   url.searchParams.set('limit', '20')
   url.searchParams.set('isSeries', 'false')
   url.searchParams.set('notNullFields', 'poster.url')
+  if (maxRuntime) url.searchParams.set('movieLength', `1-${maxRuntime}`)
   url.searchParams.set('sortField', filters.sort === 'rating' ? 'rating.kp' : filters.sort === 'newest' ? 'year' : 'votes.kp')
   url.searchParams.set('sortType', '-1')
   if (filters.genre && poiskGenres[filters.genre]) url.searchParams.set('genres.name', poiskGenres[filters.genre])

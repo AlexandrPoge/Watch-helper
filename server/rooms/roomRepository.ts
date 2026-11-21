@@ -3,6 +3,15 @@ import { pool, transaction } from '../db/pool'
 import { RoomError } from './roomErrors'
 import type { RoomMode } from './types'
 
+export async function recentRooms(guest?: string) {
+  if (!guest) return []
+  const result = await pool.query(
+    `SELECT r.id, r.title, r.status FROM rooms r JOIN room_members m ON r.id=m.room_id
+     WHERE m.session_hash=$1 AND m.removed_at IS NULL ORDER BY m.joined_at DESC LIMIT 20`, [guest],
+  )
+  return result.rows
+}
+
 export async function createRoom(input: { title: string; mode: RoomMode; hostName: string }, guest: string) {
   return transaction(async (client) => {
     await client.query('INSERT INTO guest_sessions(token_hash) VALUES($1) ON CONFLICT DO NOTHING', [guest])

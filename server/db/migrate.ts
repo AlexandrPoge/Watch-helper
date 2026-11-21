@@ -32,7 +32,7 @@ export async function migrate() {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1]?.endsWith('/migrate.ts') && fileURLToPath(import.meta.url) === process.argv[1]) {
   migrate().then(() => pool.end()).catch(async (error) => {
     console.error('Database migration failed', error)
     await pool.end()

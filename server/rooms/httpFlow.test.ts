@@ -74,6 +74,8 @@ run('room HTTP and live events', () => {
     const joined = await request(`/api/rooms/${roomId}/join`, 'POST', '', { name: 'Гость' })
     expect(joined.response.status).toBe(200)
     guestCookie = joined.response.headers.get('set-cookie')?.split(';')[0] ?? ''
+    expect((await request('/api/rooms')).data.items).toEqual([])
+    expect((await request('/api/rooms', 'GET', guestCookie)).data.items[0].id).toBe(roomId)
     expect(joined.data.room.me.id).not.toBe(created.data.room.me.id)
     const hostSocket = await connect(hostCookie)
     const guestSocket = await connect(guestCookie)
@@ -96,6 +98,7 @@ run('room HTTP and live events', () => {
     const removed = await request(`/api/rooms/${roomId}/members/${joined.data.room.me.id}`, 'DELETE', hostCookie)
     expect(removed.response.status).toBe(200)
     await revoked
+    expect((await request('/api/rooms', 'GET', guestCookie)).data.items).toEqual([])
     expect((await request(`/api/rooms/${roomId}`, 'GET', guestCookie)).data.room.me).toBeUndefined()
   })
 })

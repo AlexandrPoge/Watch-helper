@@ -3,22 +3,34 @@ import type { CatalogItem } from './types'
 import { movieGenres, randomDiscoverUrl, type RandomFilters } from './randomDiscover'
 import { tmdbGenreNames } from './tmdbGenres'
 import { getRandomPoisk } from './randomPoisk'
+import { browsePoisk } from './movieBrowseService'
 
 export type RandomMovieFilters = { genre?: string; maxRuntime?: number }
 
 export async function getRandomMovie(filters: RandomFilters & { excludeId?: string }): Promise<CatalogItem | null> {
-  if ((filters.country === 'RU' || filters.country === 'SU') && env.kinopoiskDevToken) {
+  const preferPoisk = filters.country === 'RU' || filters.country === 'SU' || !env.tmdbApiKey
+  if (preferPoisk && env.kinopoiskDevToken) {
     try {
       const item = await getRandomPoisk(filters, env.kinopoiskDevToken)
       if (item) return item
     } catch (error) {
-      console.warn('PoiskKino random unavailable', error)
+      if (!env.tmdbApiKey) throw error
     }
   }
   if (!env.tmdbApiKey) return null
+  try {
+    const item = await randomTmdb(env.tmdbApiKey, filters)
+    if (item || preferPoisk || !env.kinopoiskDevToken) return item
+  } catch (error) {
+    if (preferPoisk || !env.kinopoiskDevToken) throw error
+  }
+  return getRandomPoisk(filters, env.kinopoiskDevToken)
+}
+
+async function randomTmdb(key: string, filters: RandomFilters & { excludeId?: string }) {
   const page = 1 + Math.floor(Math.random() * 20)
-  const items = await discover(randomDiscoverUrl(env.tmdbApiKey, filters, page))
-  const pool = items.length ? items : page === 1 ? [] : await discover(randomDiscoverUrl(env.tmdbApiKey, filters, 1))
+  const items = await discover(randomDiscoverUrl(key, filters, page))
+  const pool = items.length ? items : page === 1 ? [] : await discover(randomDiscoverUrl(key, filters, 1))
   const alternatives = pool.filter((item) => `tmdb:${filters.kind === 'series' ? 'series' : 'movie'}:${item.id}` !== filters.excludeId)
   const item = (alternatives.length ? alternatives : pool)[Math.floor(Math.random() * (alternatives.length || pool.length))]
   return item ? filters.kind === 'series' ? mapSeries(item) : mapMovie(item, filters.country) : null
@@ -31,6 +43,15 @@ async function discover(url: URL): Promise<TmdbItem[]> {
 }
 
 export async function getVotingMovies(count = 10, filters: RandomMovieFilters = {}) {
+  const tmdb = await votingTmdb(count, filters).catch(() => [])
+  if (tmdb.some((movie) => movie.posterUrl) || !env.kinopoiskDevToken) return tmdb
+  const page = 1 + Math.floor(Math.random() * 15)
+  const getPage = (page: number) => browsePoisk({ genre: filters.genre, rating: '6.5', page }, filters.maxRuntime)
+  const items = await getPage(page)
+  return sample(items.length || page === 1 ? items : await getPage(1), count)
+}
+
+async function votingTmdb(count: number, filters: RandomMovieFilters) {
   if (!env.tmdbApiKey) return []
   const url = new URL('https://api.themoviedb.org/3/discover/movie')
   url.searchParams.set('api_key', env.tmdbApiKey)
@@ -44,14 +65,18 @@ export async function getVotingMovies(count = 10, filters: RandomMovieFilters = 
   const response = await fetch(url, { signal: AbortSignal.timeout(4_000) })
   if (!response.ok) return []
   const data = await response.json() as { results: TmdbMovie[] }
-  const shuffled = [...data.results]
+  return sample(data.results.filter(item => item.poster_path), count).map((item) => mapMovie(item))
+}
+
+function sample<T>(items: T[], count: number) {
+  const shuffled = [...items]
   for (let index = shuffled.length - 1; index > 0; index--) {
     const swap = Math.floor(Math.random() * (index + 1))
     const item = shuffled[index]
     shuffled[index] = shuffled[swap]
     shuffled[swap] = item
   }
-  return shuffled.slice(0, count).map((item) => mapMovie(item))
+  return shuffled.slice(0, count)
 }
 
 function mapMovie(item: TmdbItem, country?: string): CatalogItem {

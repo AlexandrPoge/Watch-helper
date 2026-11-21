@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Heart, UsersRound } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { createRoom } from '../features/rooms/api/roomApi'
+import { RoomCodeForm } from '../features/rooms/components/RoomCodeForm'
 import type { RoomMode } from '../entities/room/model'
 import { AppHeader } from './components/AppHeader'
 import { getDisplayName, saveDisplayName } from '../features/rooms/roomIdentity'
@@ -31,6 +32,7 @@ export function CreateRoomPage() {
           {create.isError && <p className="text-sm text-rose-300">{create.error.message}</p>}
           <button disabled={!hostName.trim() || create.isPending} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-500 px-5 py-3.5 font-bold transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50">{create.isPending ? 'Создаём…' : 'Создать комнату'} <ArrowRight size={18} /></button>
         </form>
+        <RoomCodeForm />
       </section>
     </main>
   )

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { movies } from '../entities/movie/mockMovies'
 import { MovieShelf } from '../features/movies/components/MovieShelf'
+import { defaultCatalogFilters } from '../features/catalog/model'
+import { useBrowseCatalog } from '../features/catalog/useBrowseCatalog'
 import { usePeopleSearch } from '../features/people/usePeople'
 import { RoomCard } from '../features/rooms/components/RoomCard'
 import { useCatalogSearch } from '../features/search/model/useCatalogSearch'
@@ -28,7 +30,12 @@ export function HomePage() {
   const debouncedQuery = useDebouncedValue(query)
   const watchlist = useWatchlist()
   const taste = useTasteProfile()
-  const recommendations = useMemo(() => recommendMovies(movies, taste.genres, taste.reactions), [taste.genres, taste.reactions])
+  const personalized = taste.genres.length > 0 || taste.reactions.length > 0
+  const discovery = useBrowseCatalog('movie', defaultCatalogFilters, personalized && !query)
+  const recommendations = useMemo(() => {
+    const candidates = discovery.data?.pages[0]?.items
+    return recommendMovies(personalized && candidates?.length ? candidates : movies, taste.genres, taste.reactions).slice(0, 6)
+  }, [discovery.data, personalized, taste.genres, taste.reactions])
   const fallbackResults = useMemo(() => {
     const normalizedQuery = debouncedQuery.toLowerCase()
     return movies.filter((movie) => movie.title.toLowerCase().includes(normalizedQuery))

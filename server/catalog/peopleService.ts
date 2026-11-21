@@ -1,4 +1,5 @@
 import { env } from '../config/env'
+import { parseCatalogId } from './catalogId'
 import type { CatalogItem, PersonDetails, PersonSummary } from './types'
 
 export async function searchPeople(query: string): Promise<PersonSummary[]> {
@@ -16,8 +17,9 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 }
 
 export async function getPersonDetails(catalogId: string): Promise<PersonDetails | null> {
-  const [provider, type, id] = catalogId.split(':')
-  if (type !== 'person' || !id) return null
+  const parsed = parseCatalogId(catalogId, 'person')
+  if (!parsed) return null
+  const { provider, id } = parsed
   if (provider === 'kinopoisk') return getPoiskPerson(catalogId, id)
   if (provider === 'tvmaze') return getTvMazePerson(catalogId, id)
   if (provider !== 'tmdb' || !env.tmdbApiKey) return null

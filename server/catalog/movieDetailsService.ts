@@ -1,12 +1,14 @@
 import { env } from '../config/env'
+import { parseCatalogId } from './catalogId'
 import type { SeriesDetails } from './types'
 import { mapTmdbWatch, tmdbExternalLinks } from './watchOptions'
 import { mapOmdbCast } from './omdbCast'
 import { isActor } from './poiskCast'
 
 export async function getMovieDetails(catalogId: string): Promise<SeriesDetails | null> {
-  const [provider, kind, id] = catalogId.split(':')
-  if (kind !== 'movie' || !id) return null
+  const parsed = parseCatalogId(catalogId, 'movie')
+  if (!parsed) return null
+  const { provider, id } = parsed
   if (provider === 'tmdb') return getTmdbMovie(id)
   if (provider === 'kinopoisk') return getPoiskMovie(id)
   if (provider === 'omdb') return getOmdbMovie(id)

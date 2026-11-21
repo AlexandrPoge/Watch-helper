@@ -15,6 +15,12 @@ export async function getShareInfo() {
   return response.json() as Promise<{ urls: string[]; scope: 'public' | 'local-network' }>
 }
 
+export async function getRecentRooms(): Promise<Pick<Room, 'id' | 'title' | 'status'>[]> {
+  const response = await fetch('/api/rooms')
+  if (!response.ok) throw new Error('Не удалось загрузить список комнат.')
+  return (await response.json()).items
+}
+
 async function requestRoom(path: string, options?: RequestInit): Promise<Room> {
   const response = await fetch(path, { ...options, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...options?.headers } })
   const data = await response.json() as { room?: Room; message?: string }

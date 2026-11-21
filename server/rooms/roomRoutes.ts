@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { createGuest, readGuest } from './guestSession'
 import { roomError, RoomError } from './roomErrors'
-import { closeRoom, createRoom, joinRoom, removeMember, requireHost } from './roomRepository'
+import { closeRoom, createRoom, joinRoom, recentRooms, removeMember, requireHost } from './roomRepository'
 import { cancelRound, startRound, vote } from './roundRepository'
 import { getRoomView } from './roomView'
 import { evictMember, notifyRoom } from './socketHub'
@@ -23,6 +23,13 @@ const view = async (roomId: string, guest?: string) => {
   return room
 }
 
+roomRouter.use('/api/rooms', (_, response, next) => {
+  response.set('Cache-Control', 'private, no-store')
+  next()
+})
+roomRouter.get('/api/rooms', handle(async (request, response) => {
+  response.json({ items: await recentRooms(readGuest(request)) })
+}))
 roomRouter.post('/api/rooms', handle(async (request, response) => {
   const title = cleanText(request.body?.title, 48)
   const hostName = cleanText(request.body?.hostName, 24)

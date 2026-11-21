@@ -1,6 +1,7 @@
 import { Router, type Response } from 'express'
 
 const maxImageBytes = 8 * 1024 * 1024
+let activeRequests = 0
 const allowedContentTypes = new Set(['image/avif', 'image/gif', 'image/jpeg', 'image/png', 'image/webp'])
 const allowedHosts = [
   'image.tmdb.org', 'media.themoviedb.org', 'st.kp.yandex.net',
@@ -13,6 +14,8 @@ export const imageProxyRouter = Router()
 imageProxyRouter.get('/api/images', async (request, response) => {
   const source = typeof request.query.url === 'string' ? request.query.url : ''
   if (!isAllowedImageUrl(source)) return response.status(400).json({ message: 'Unsupported image source.' })
+  if (activeRequests >= 8) return response.status(503).set('Retry-After', '2').json({ message: 'Image service busy.' })
+  activeRequests++
   try {
     const upstream = await fetchAllowedImage(source)
     if (!upstream.ok || !isAllowedImageUrl(upstream.url)) return sendPlaceholder(response)
@@ -24,6 +27,8 @@ imageProxyRouter.get('/api/images', async (request, response) => {
     return response.send(body)
   } catch {
     return sendPlaceholder(response)
+  } finally {
+    activeRequests--
   }
 })
 
@@ -64,7 +69,7 @@ async function readLimited(response: globalThis.Response) {
 export function isAllowedImageUrl(source: string) {
   try {
     const url = new URL(source)
-    return url.protocol === 'https:' && allowedHosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))
+    return url.protocol === 'https:' && !url.username && !url.password && (!url.port || url.port === '443') && allowedHosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))
   } catch {
     return false
   }

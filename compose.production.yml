@@ -1,0 +1,54 @@
+name: watch-helper-production
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: watch_helper
+      POSTGRES_DB: watch_helper
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random hexadecimal password}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "watch_helper"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  api:
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://watch_helper:${POSTGRES_PASSWORD}@postgres/watch_helper
+      PUBLIC_APP_URL: https://${APP_DOMAIN:?Set your domain}
+      BEHIND_PROXY: "1"
+      TMDB_API_KEY: ${TMDB_API_KEY:?Set the catalog key}
+      OMDB_API_KEY: ${OMDB_API_KEY:-}
+      KINOPOISK_DEV_TOKEN: ${KINOPOISK_DEV_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 7s
+      retries: 5
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certificates:/data
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  database:
+  certificates:

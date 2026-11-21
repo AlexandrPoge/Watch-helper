@@ -2,9 +2,11 @@
 
 Веб-приложение для выбора фильмов для себя, пары или компании.
 
+План реализации и текущие статусы задач находятся в [PLAN.md](PLAN.md).
+
 ## Локальный запуск
 
-Нужны Node.js 20+, npm и Docker Desktop с запущенным движком.
+Нужны Node.js 22+, npm и запущенный Docker с Compose.
 
 1. `npm install`
 2. `docker compose up -d postgres` — PostgreSQL доступен на `127.0.0.1:5433`.
@@ -13,6 +15,22 @@
 5. `npm run dev` — сайт: `http://localhost:5173`, API: `http://localhost:3001`.
 
 Проверки: `npm run lint`, `npm run build`, `npm test -- --run`. Интеграционные тесты с БД: `RUN_DB_TESTS=1 npm test -- --run`. Данные комнат хранятся в Docker volume `watch_helper_pg` и переживают перезапуск API.
+
+После установки зависимостей и настройки `.env` команда `npm run dev:stack` запускает PostgreSQL, дожидается готовности и поднимает API и интерфейс. API применяет миграции при старте.
+
+## Production
+
+### GitHub Pages
+
+`npm run build:pages` собирает интерфейс для `https://alexandrpoge.github.io/Watch-helper/` с hash-маршрутами. Workflow Check публикует сборку после успешных тестов при обновлении `master`. В настройках Pages источником должен быть GitHub Actions. GitHub Pages обслуживает статические файлы. Для полного каталога и совместных комнат требуется API на отдельном сервере.
+
+### Полный стек
+
+Направьте DNS домена на сервер с доступными портами 80 и 443. В закрытом `.env` задайте `APP_DOMAIN` (имя хоста), `POSTGRES_PASSWORD` (случайное значение от `openssl rand -hex 32`) и `TMDB_API_KEY`. Затем выполните `docker compose -f compose.production.yml up -d --build --wait`. Caddy обслуживает интерфейс, получает сертификат HTTPS и проксирует API и Socket.IO. PostgreSQL использует отдельный production-том.
+
+Проверяйте процесс через `/health`, доступность БД через `/api/ready` (200 или 503), состояние контейнеров и журнал запросов через `docker compose -f compose.production.yml ps` и `docker compose -f compose.production.yml logs --tail 100`.
+
+Команда `bash scripts/backup-db.sh -f compose.production.yml` создаёт архив в закрытом каталоге `backups/` и проверяет его оглавление. Для ежедневного копирования добавьте эту команду в cron на сервере и храните копию архива вне сервера. Для проверки восстановления используйте отдельную пустую БД и `pg_restore --exit-on-error --no-owner -d ИМЯ_БД файл.dump`.
 
 Для доступа другого устройства в одной Wi‑Fi сети используйте адрес, показанный на экране приглашения. Публичный интернет-доступ требует отдельного развёртывания с HTTPS, PostgreSQL и переменной `DATABASE_URL`; в production она обязательна. Гостевой вход использует `HttpOnly` cookie, поэтому ссылка содержит только код комнаты.
 

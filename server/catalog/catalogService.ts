@@ -7,7 +7,8 @@ import type { CatalogItem, CatalogProvider } from './types'
 const providers: CatalogProvider[] = [tmdbProvider, poiskKinoProvider, omdbProvider, tvMazeProvider]
 
 export async function searchCatalog(query: string) {
-  const settled = await Promise.allSettled(providers.map((provider) => provider.search(query)))
+  const settled = await Promise.allSettled(providers.filter((provider) => provider.isConfigured).map((provider) => provider.search(query)))
+  if (settled.every((result) => result.status === 'rejected')) throw new Error('Search providers unavailable')
   const results = settled.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
   return mergeCatalogItems(results).slice(0, 24)
 }
@@ -19,7 +20,7 @@ export function getCatalogStatus() {
 export function mergeCatalogItems(items: CatalogItem[]) {
   const uniqueItems = new Map<string, CatalogItem>()
   items.forEach((item) => {
-    const key = `${item.title.toLocaleLowerCase()}-${item.year ?? 'unknown'}`
+    const key = `${item.kind}-${item.title.toLocaleLowerCase()}-${item.year ?? 'unknown'}`
     const savedItem = uniqueItems.get(key)
     if (!savedItem) return void uniqueItems.set(key, item)
     uniqueItems.set(key, {

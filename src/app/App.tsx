@@ -1,6 +1,6 @@
-import { Suspense, lazy, useLayoutEffect } from 'react'
+import { Suspense, lazy, useLayoutEffect, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { MobileNav } from '../pages/components/MobileNav'
 import { TechBackground } from '../pages/components/TechBackground'
 
@@ -15,19 +15,22 @@ const PersonPage = lazy(() => import('../pages/PersonPage').then((module) => ({ 
 const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
 const RandomMoviePage = lazy(() => import('../pages/RandomMoviePage').then((module) => ({ default: module.RandomMoviePage })))
 const queryClient = new QueryClient()
+const Router = import.meta.env.MODE === 'pages' ? HashRouter : BrowserRouter
 
 export function App() {
   return (
-    <BrowserRouter><QueryClientProvider client={queryClient}><TechBackground /><AnimatedRoutes /><MobileNav /></QueryClientProvider></BrowserRouter>
+    <Router><QueryClientProvider client={queryClient}><a href="#app-content" onClick={(event) => { event.preventDefault(); document.getElementById('app-content')?.focus() }} className="skip-link">Перейти к содержимому</a><TechBackground /><AnimatedRoutes /><MobileNav /></QueryClientProvider></Router>
   )
 }
 
 function AnimatedRoutes() {
   const location = useLocation()
+  const content = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    content.current?.focus({ preventScroll: true })
   }, [location.pathname])
-  return <div key={location.pathname} className="page-transition"><Suspense fallback={<div className="min-h-screen p-8 text-sm text-slate-400">Загружаем страницу…</div>}><Routes location={location}>
+  return <div ref={content} id="app-content" tabIndex={-1} className="page-transition"><Suspense fallback={<div role="status" className="min-h-screen p-8 text-sm text-slate-400">Загружаем страницу…</div>}><Routes location={location}>
       <Route path="/" element={<HomePage />} />
       <Route path="/series" element={<SeriesPage />} />
       <Route path="/movies" element={<MoviesPage />} />
