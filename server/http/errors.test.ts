@@ -23,6 +23,8 @@ it.each([
   ['/api/movies/random?maxRuntime=Infinity', undefined, 400],
   ['/api/movies/random?maxRuntime=-1', undefined, 400],
   ['/api/movies?rating=11', undefined, 400],
+  ['/api/movies?year=0x7e8', undefined, 400],
+  ['/api/movies?rating=0xA', undefined, 400],
 ] as const)('returns a JSON error for %s', async (path, body, status) => {
   const response = await fetch(base + path, {
     method: body ? 'POST' : 'GET', body,

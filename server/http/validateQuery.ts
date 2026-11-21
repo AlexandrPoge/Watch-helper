@@ -8,7 +8,8 @@ export const validateQuery: RequestHandler = (request, response, next) => {
   for (const [name, [minimum, maximum, integer]] of Object.entries(ranges)) {
     const raw = request.query[name]
     if (raw === undefined) continue
-    const value = typeof raw === 'string' && raw.trim() ? Number(raw) : NaN
+    const decimal = integer ? /^[0-9]+$/ : /^[0-9]+(?:\.[0-9]+)?$/
+    const value = typeof raw === 'string' && decimal.test(raw) ? Number(raw) : NaN
     if (!Number.isFinite(value) || value < minimum || value > maximum || (integer && !Number.isSafeInteger(value))) {
       response.status(400).json({ message: `Invalid ${name} query parameter.` })
       return
