@@ -4,6 +4,7 @@ import { movieGenres, randomDiscoverUrl, type RandomFilters } from './randomDisc
 import { tmdbGenreNames } from './tmdbGenres'
 import { getRandomPoisk } from './randomPoisk'
 import { browsePoisk } from './movieBrowseService'
+import { sample } from './sample'
 
 export type RandomMovieFilters = { genre?: string; maxRuntime?: number }
 
@@ -66,17 +67,6 @@ async function votingTmdb(count: number, filters: RandomMovieFilters) {
   if (!response.ok) return []
   const data = await response.json() as { results: TmdbMovie[] }
   return sample(data.results.filter(item => item.poster_path), count).map((item) => mapMovie(item))
-}
-
-function sample<T>(items: T[], count: number) {
-  const shuffled = [...items]
-  for (let index = shuffled.length - 1; index > 0; index--) {
-    const swap = Math.floor(Math.random() * (index + 1))
-    const item = shuffled[index]
-    shuffled[index] = shuffled[swap]
-    shuffled[swap] = item
-  }
-  return shuffled.slice(0, count)
 }
 
 function mapMovie(item: TmdbItem, country?: string): CatalogItem {

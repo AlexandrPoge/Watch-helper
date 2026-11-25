@@ -1,7 +1,7 @@
 export type RoomMode = 'couple' | 'group'
 export type VoteValue = 'up' | 'skip'
 export type Mood = { genre?: string; maxRuntime?: number }
-export type RoundSetup = Mood & { blind?: boolean }
+export type RoundSetup = Mood & { blind?: boolean; candidateIds?: string[] }
 export type RoomMovie = { id: string; title: string; year: number; posterUrl: string; rating?: number; overview?: string }
 export type RoomMember = { id: string; name: string; isHost: boolean }
 export type RoomRound = {

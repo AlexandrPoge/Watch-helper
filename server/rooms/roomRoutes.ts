@@ -5,7 +5,7 @@ import { closeRoom, createRoom, joinRoom, recentRooms, removeMember, requireHost
 import { cancelRound, startRound, vote } from './roundRepository'
 import { getRoomView } from './roomView'
 import { evictMember, notifyRoom } from './socketHub'
-import { getVotingMovies } from '../catalog/randomMovieService'
+import { resolveRoundCandidates } from './roundCandidates'
 import type { RoomMode, RoundSetup, VoteValue } from './types'
 
 export const roomRouter = Router()
@@ -54,13 +54,15 @@ roomRouter.post('/api/rooms/:roomId/join', handle(async (request, response) => {
 }))
 
 roomRouter.post('/api/rooms/:roomId/rounds', handle(async (request, response) => {
-  const setup = parseSetup(request.body)
-  await requireHost(request.params.roomId, readGuest(request))
-  const movies = await getVotingMovies(12, setup).catch(() => { throw new RoomError('NO_CANDIDATES', 502) })
-  const candidates = movies.flatMap((movie) => movie.posterUrl ? [{ id: movie.id, title: movie.title, year: movie.year ?? 0, posterUrl: movie.posterUrl, rating: movie.rating, overview: setup.blind ? `${movie.genres?.slice(0, 2).join(' / ') || 'Кино'} · ${movie.overview ?? ''}` : movie.overview }] : [])
-  await startRound(request.params.roomId, readGuest(request), setup, candidates)
+  const selection: unknown = request.body?.candidateIds
+  const { blind, ...mood } = parseSetup(request.body)
+  const setup = selection === undefined ? { ...mood, blind } : { blind }
+  const guest = readGuest(request)
+  await requireHost(request.params.roomId, guest)
+  const candidates = await resolveRoundCandidates(setup, selection)
+  await startRound(request.params.roomId, guest, setup, candidates)
   notifyRoom(request.params.roomId)
-  response.json({ room: await view(request.params.roomId, readGuest(request)) })
+  response.json({ room: await view(request.params.roomId, guest) })
 }))
 
 roomRouter.post('/api/rooms/:roomId/votes', handle(async (request, response) => {

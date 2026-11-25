@@ -82,6 +82,9 @@ export function RoomPage() {
 
 function message(code: string) {
   if (code === 'ROUND_CHANGED' || code === 'NO_ACTIVE_ROUND') return 'Раунд уже изменился. Посмотри текущее состояние комнаты.'
+  if (code === 'INVALID_MOVIE_SELECTION') return 'Проверь список: нужны разные фильмы из каталога.'
+  if (code === 'MANUAL_MOVIE_UNAVAILABLE') return 'Один из фильмов больше недоступен в каталоге. Замени его или выбери автоматический подбор.'
+  if (code === 'MANUAL_CATALOG_UNAVAILABLE') return 'Каталог временно недоступен. Твой список сохранён до выхода из комнаты. Попробуй ещё раз.'
   const labels: Record<string, string> = { ROOM_IS_FULL: 'В комнате больше нет мест.', NAME_TAKEN: 'Это имя уже занято.', NO_CANDIDATES: 'Подходящих фильмов сейчас нет. Измени фильтры и попробуй ещё раз.', ROUND_ACTIVE: 'Сначала заверши текущий раунд.', ROOM_WAITING_PARTNER: 'Сначала пригласи партнёра.', MEMBER_REMOVED: 'Тебя удалили из комнаты.' }
   return labels[code] ?? 'Не удалось выполнить действие. Попробуй ещё раз.'
 }

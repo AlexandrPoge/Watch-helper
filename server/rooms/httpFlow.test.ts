@@ -1,15 +1,22 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { io, type Socket } from 'socket.io-client'
 import type { Server } from 'node:http'
 import { app } from '../app'
 import { migrate } from '../db/migrate'
 import { pool } from '../db/pool'
 import { startSocketHub } from './socketHub'
-import { startRound } from './roundRepository'
-import { notifyRoom } from './socketHub'
+import { getMovieDetails } from '../catalog/movieDetailsService'
 
 const run = process.env.RUN_DB_TESTS === '1' ? describe : describe.skip
-const movies = [{ id: 'test:one', title: 'Первый', year: 2024, posterUrl: 'https://example.test/one.jpg' }]
+const movies = [
+  { id: 'tmdb:movie:101', title: 'Первый', year: 2024, posterUrl: 'https://example.test/one.jpg' },
+  { id: 'tmdb:movie:102', title: 'Второй', year: 2023, posterUrl: 'https://example.test/two.jpg' },
+]
+vi.mock('../catalog/movieDetailsService', () => ({ getMovieDetails: vi.fn() }))
+vi.mocked(getMovieDetails).mockImplementation(async id => {
+  const movie = movies.find(item => item.id === id)
+  return movie ? { ...movie, kind: 'movie', match: 80, sourceNames: ['TMDB'], watchOptions: [], externalLinks: [], cast: [], similar: [] } : null
+})
 let server: Server
 let base = ''
 let roomId = ''
@@ -65,7 +72,7 @@ run('room HTTP and live events', () => {
     await pool.end()
   })
 
-  it('separates guests, publishes changes and restores the room after reconnect', async () => {
+  it('lets the host start a blind round from a shortlist and restores the room after reconnect', async () => {
     const created = await request('/api/rooms', 'POST', '', { title: 'Тестовая комната', mode: 'couple', hostName: 'Хост' })
     expect(created.response.status).toBe(201)
     roomId = created.data.room.id
@@ -79,11 +86,22 @@ run('room HTTP and live events', () => {
     expect(joined.data.room.me.id).not.toBe(created.data.room.me.id)
     const hostSocket = await connect(hostCookie)
     const guestSocket = await connect(guestCookie)
-    const roundId = await startRound(roomId, (await pool.query('SELECT session_hash FROM room_members WHERE room_id=$1 AND is_host=true', [roomId])).rows[0].session_hash, {}, movies)
+    const path = `/api/rooms/${roomId}/rounds`
+    const candidateIds = movies.map(movie => movie.id)
+    expect((await request(path, 'POST', guestCookie, { candidateIds })).response.status).toBe(403)
+    expect((await request(path, 'POST', hostCookie, { candidateIds: [candidateIds[0], candidateIds[0]] })).response.status).toBe(400)
+    expect((await request(path, 'POST', hostCookie, { candidateIds: [candidateIds[0], 'tmdb:movie:999'] })).response.status).toBe(422)
     const changed = new Promise<void>((resolve) => guestSocket.once('room:changed', resolve))
-    notifyRoom(roomId)
+    const started = await request(path, 'POST', hostCookie, { candidateIds, blind: true, maxRuntime: 90 })
+    expect(started.response.status).toBe(200)
+    const round = started.data.room.round
+    const roundId = round.id
+    expect(round.candidates).toHaveLength(2)
+    expect(round.mood).toEqual({})
+    expect(JSON.stringify(round)).not.toContain(movies[0].id)
+    expect(JSON.stringify(round)).not.toContain(movies[1].title)
     await changed
-    const vote = { movieId: movies[0].id, value: 'up' }
+    const vote = { movieId: round.candidates[0].id, value: 'up' }
     const staleVote = await request(`/api/rooms/${roomId}/votes`, 'POST', guestCookie, { ...vote, roundId: '00000000-0000-0000-0000-000000000000' })
     expect(staleVote.response.status).toBe(409)
     expect(staleVote.data.message).toBe('ROUND_CHANGED')
@@ -94,8 +112,9 @@ run('room HTTP and live events', () => {
     hostSocket.disconnect()
     const restored = await connect(hostCookie)
     expect(restored.connected).toBe(true)
-    const hostVote = await request(`/api/rooms/${roomId}/votes`, 'POST', hostCookie, { movieId: movies[0].id, value: 'up' })
-    expect(hostVote.data.room.round.winners).toEqual([movies[0].id])
+    const hostVote = await request(`/api/rooms/${roomId}/votes`, 'POST', hostCookie, vote)
+    expect(hostVote.data.room.round.candidates.map((movie: { id: string }) => movie.id)).toEqual(expect.arrayContaining(candidateIds))
+    expect(hostVote.data.room.round.winners).toEqual([hostVote.data.room.round.candidates[0].id])
     const history = await request(`/api/rooms/${roomId}/history`, 'GET', guestCookie)
     expect(history.data.items).toHaveLength(1)
     const revoked = new Promise<void>((resolve) => guestSocket.once('room:revoked', resolve))
