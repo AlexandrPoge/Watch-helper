@@ -17,3 +17,7 @@ CMD ["node", "server/index.js"]
 FROM caddy:2-alpine AS web
 COPY --from=build /app/dist /srv
 COPY Caddyfile /etc/caddy/Caddyfile
+
+FROM api AS app
+ENV SERVE_WEB=1
+COPY --from=build /app/dist ./dist

@@ -64,9 +64,10 @@ roomRouter.post('/api/rooms/:roomId/rounds', handle(async (request, response) =>
 }))
 
 roomRouter.post('/api/rooms/:roomId/votes', handle(async (request, response) => {
-  const { movieId, value } = request.body ?? {}
+  const { movieId, value, roundId } = request.body ?? {}
   if (typeof movieId !== 'string' || !['up', 'skip'].includes(value)) throw new RoomError('INVALID_VOTE')
-  await vote(request.params.roomId, readGuest(request), movieId, value as VoteValue)
+  if (roundId !== undefined && (typeof roundId !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(roundId))) throw new RoomError('INVALID_VOTE')
+  await vote(request.params.roomId, readGuest(request), movieId, value as VoteValue, roundId)
   notifyRoom(request.params.roomId)
   response.json({ room: await view(request.params.roomId, readGuest(request)) })
 }))

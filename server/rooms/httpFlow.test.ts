@@ -79,11 +79,15 @@ run('room HTTP and live events', () => {
     expect(joined.data.room.me.id).not.toBe(created.data.room.me.id)
     const hostSocket = await connect(hostCookie)
     const guestSocket = await connect(guestCookie)
-    await startRound(roomId, (await pool.query('SELECT session_hash FROM room_members WHERE room_id=$1 AND is_host=true', [roomId])).rows[0].session_hash, {}, movies)
+    const roundId = await startRound(roomId, (await pool.query('SELECT session_hash FROM room_members WHERE room_id=$1 AND is_host=true', [roomId])).rows[0].session_hash, {}, movies)
     const changed = new Promise<void>((resolve) => guestSocket.once('room:changed', resolve))
     notifyRoom(roomId)
     await changed
-    const guestVote = await request(`/api/rooms/${roomId}/votes`, 'POST', guestCookie, { movieId: movies[0].id, value: 'up' })
+    const vote = { movieId: movies[0].id, value: 'up' }
+    const staleVote = await request(`/api/rooms/${roomId}/votes`, 'POST', guestCookie, { ...vote, roundId: '00000000-0000-0000-0000-000000000000' })
+    expect(staleVote.response.status).toBe(409)
+    expect(staleVote.data.message).toBe('ROUND_CHANGED')
+    const guestVote = await request(`/api/rooms/${roomId}/votes`, 'POST', guestCookie, { ...vote, roundId })
     expect(guestVote.response.status).toBe(200)
     const hostView = await request(`/api/rooms/${roomId}`, 'GET', hostCookie)
     expect(hostView.data.room.round.myVotes).toEqual([])

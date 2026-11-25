@@ -7,7 +7,7 @@ export const startRound = (id: string, setup: RoundSetup) => requestRoom(`/api/r
 export const cancelRound = (id: string) => requestRoom(`/api/rooms/${id}/rounds/current`, { method: 'DELETE' })
 export const closeRoom = (id: string) => requestRoom(`/api/rooms/${id}/close`, { method: 'POST' })
 export const removeMember = (id: string, memberId: string) => requestRoom(`/api/rooms/${id}/members/${memberId}`, { method: 'DELETE' })
-export const voteForMovie = (id: string, movieId: string, value: VoteValue) => requestRoom(`/api/rooms/${id}/votes`, { method: 'POST', body: JSON.stringify({ movieId, value }) })
+export const voteForMovie = (id: string, roundId: string, movieId: string, value: VoteValue) => requestRoom(`/api/rooms/${id}/votes`, { method: 'POST', body: JSON.stringify({ roundId, movieId, value }) })
 
 export async function getShareInfo() {
   const response = await fetch('/api/network/share')

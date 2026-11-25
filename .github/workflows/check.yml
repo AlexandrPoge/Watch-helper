@@ -30,6 +30,8 @@ jobs:
       - run: npm test -- --run
       - run: npm run build:pages
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        env:
+          VITE_FULL_APP_URL: ${{ vars.FULL_APP_URL }}
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         with:

@@ -38,7 +38,7 @@ export async function cancelRound(roomId: string, guest?: string) {
   })
 }
 
-export async function vote(roomId: string, guest: string | undefined, movieId: string, value: VoteValue) {
+export async function vote(roomId: string, guest: string | undefined, movieId: string, value: VoteValue, expectedRoundId?: string) {
   const member = await getMembership(roomId, guest)
   if (!member) throw new RoomError('MEMBER_REQUIRED', 403)
   return transaction(async (client) => {
@@ -47,6 +47,7 @@ export async function vote(roomId: string, guest: string | undefined, movieId: s
     const round = await client.query("SELECT id,blind FROM room_rounds WHERE room_id=$1 AND status='active' FOR UPDATE", [roomId])
     const roundId = round.rows[0]?.id as string | undefined
     if (!roundId) throw new RoomError('NO_ACTIVE_ROUND', 409)
+    if (expectedRoundId && expectedRoundId !== roundId) throw new RoomError('ROUND_CHANGED', 409)
     const eligible = await client.query('SELECT 1 FROM round_participants WHERE round_id=$1 AND member_id=$2', [roundId, member.id])
     if (!eligible.rowCount) throw new RoomError('NEXT_ROUND_ONLY', 403)
     const candidate = await client.query('SELECT movie_id FROM round_candidates WHERE round_id=$1 AND (CASE WHEN $3 THEN vote_id::text ELSE movie_id END)=$2', [roundId, movieId, round.rows[0].blind])

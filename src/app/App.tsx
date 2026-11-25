@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { MobileNav } from '../pages/components/MobileNav'
 import { TechBackground } from '../pages/components/TechBackground'
+import { PagesPreviewNotice } from './PagesPreviewNotice'
 
 const HomePage = lazy(() => import('../pages/HomePage').then((module) => ({ default: module.HomePage })))
 const CreateRoomPage = lazy(() => import('../pages/CreateRoomPage').then((module) => ({ default: module.CreateRoomPage })))
@@ -19,7 +20,7 @@ const Router = import.meta.env.MODE === 'pages' ? HashRouter : BrowserRouter
 
 export function App() {
   return (
-    <Router><QueryClientProvider client={queryClient}><a href="#app-content" onClick={(event) => { event.preventDefault(); document.getElementById('app-content')?.focus() }} className="skip-link">Перейти к содержимому</a><TechBackground /><AnimatedRoutes /><MobileNav /></QueryClientProvider></Router>
+    <Router><QueryClientProvider client={queryClient}><a href="#app-content" onClick={(event) => { event.preventDefault(); document.getElementById('app-content')?.focus() }} className="skip-link">Перейти к содержимому</a><PagesPreviewNotice /><TechBackground /><AnimatedRoutes /><MobileNav /></QueryClientProvider></Router>
   )
 }
 

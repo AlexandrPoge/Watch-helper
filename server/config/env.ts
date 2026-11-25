@@ -5,9 +5,10 @@ function portNumber(name: string, fallback: number) {
 }
 
 export const env = {
-  port: portNumber('API_PORT', 3001),
+  port: process.env.NODE_ENV === 'production' && process.env.PORT !== undefined
+    ? portNumber('PORT', 3001) : portNumber('API_PORT', 3001),
   webPort: portNumber('WEB_PORT', 5173),
-  publicAppUrl: process.env.PUBLIC_APP_URL?.replace(/\/$/, ''),
+  publicAppUrl: (process.env.PUBLIC_APP_URL || process.env.RENDER_EXTERNAL_URL)?.replace(/\/$/, ''),
   tmdbApiKey: process.env.TMDB_API_KEY,
   omdbKey: process.env.OMDB_API_KEY,
   kinopoiskDevToken: process.env.KINOPOISK_DEV_TOKEN,

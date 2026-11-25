@@ -26,6 +26,10 @@
 
 ### Полный стек
 
+Для управляемого хостинга готов [Render Blueprint](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FAlexandrPoge%2FWatch-helper). Он создаёт один веб-сервис и отдельный PostgreSQL в том же регионе. Укажите `TMDB_API_KEY` в Render и дождитесь зелёной проверки `/api/ready`. Интерфейс, API и WebSocket доступны на одном HTTPS-адресе Render. Ссылки на комнаты используют этот адрес автоматически. Бесплатная БД Render истекает через 30 дней, поэтому для постоянной эксплуатации выберите постоянную БД. Чтобы связать демоверсию с полной, задайте переменную репозитория `FULL_APP_URL` с публичным HTTPS-адресом и повторно запустите workflow Check.
+
+Тот же образ можно развернуть на другом контейнерном хостинге. Соберите `docker build --target app -t watch-helper .` и передайте `DATABASE_URL`, `TMDB_API_KEY`, `PUBLIC_APP_URL` и назначенный хостингом `PORT`. Установите `BEHIND_PROXY=1`, если внешний трафик поступает только через один доверенный прокси. Используйте одну реплику API для общего состояния Socket.IO.
+
 Направьте DNS домена на сервер с доступными портами 80 и 443. В закрытом `.env` задайте `APP_DOMAIN` (имя хоста), `POSTGRES_PASSWORD` (случайное значение от `openssl rand -hex 32`) и `TMDB_API_KEY`. Затем выполните `docker compose -f compose.production.yml up -d --build --wait`. Caddy обслуживает интерфейс, получает сертификат HTTPS и проксирует API и Socket.IO. PostgreSQL использует отдельный production-том.
 
 Проверяйте процесс через `/health`, доступность БД через `/api/ready` (200 или 503), состояние контейнеров и журнал запросов через `docker compose -f compose.production.yml ps` и `docker compose -f compose.production.yml logs --tail 100`.
