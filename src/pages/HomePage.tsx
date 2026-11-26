@@ -19,19 +19,14 @@ import { TasteStats } from './components/TasteStats'
 export function HomePage() {
   const [searchParams] = useSearchParams()
   const initialQuery = searchParams.get('q') ?? ''
-  const actorSearch = searchParams.get('tab') === 'people' && Boolean(initialQuery)
   const [query, setQuery] = useState(initialQuery)
   useEffect(() => setQuery(initialQuery), [initialQuery])
-  useEffect(() => {
-    if (!actorSearch) return
-    const frame = requestAnimationFrame(() => document.getElementById('search-results')?.scrollIntoView({ block: 'start' }))
-    return () => cancelAnimationFrame(frame)
-  }, [actorSearch, initialQuery])
-  const debouncedQuery = useDebouncedValue(query)
+  const searchTerm = query.trim()
+  const debouncedQuery = useDebouncedValue(searchTerm)
   const watchlist = useWatchlist()
   const taste = useTasteProfile()
   const personalized = taste.genres.length > 0 || taste.reactions.length > 0
-  const discovery = useBrowseCatalog('movie', defaultCatalogFilters, personalized && !query)
+  const discovery = useBrowseCatalog('movie', defaultCatalogFilters, personalized && !searchTerm)
   const recommendations = useMemo(() => {
     const candidates = discovery.data?.pages[0]?.items
     return recommendMovies(personalized && candidates?.length ? candidates : movies, taste.genres, taste.reactions).slice(0, 6)
@@ -42,14 +37,21 @@ export function HomePage() {
   }, [debouncedQuery])
   const catalogSearch = useCatalogSearch(debouncedQuery)
   const peopleSearch = usePeopleSearch(debouncedQuery)
+  const waitingForSearch = searchTerm !== debouncedQuery
+  const searchResults = searchTerm.length === 1
+    ? <p className="mt-4 text-sm text-slate-400">Введи хотя бы два символа.</p>
+    : <SearchResults results={waitingForSearch ? [] : catalogSearch.data ?? fallbackResults}
+      people={waitingForSearch ? [] : peopleSearch.data ?? []}
+      isLoading={waitingForSearch || catalogSearch.isLoading || peopleSearch.isLoading} hasError={catalogSearch.isError}
+      savedIds={watchlist.ids} onSave={watchlist.toggle} />
 
   return (
     <main id="top" className="min-h-screen overflow-hidden bg-[#090914] text-white">
       <div className="aurora pointer-events-none fixed inset-0 -z-0 opacity-70" />
       <AppHeader />
       <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 xl:px-8 xl:pb-16">
-        <DiscoveryHero query={query} onQueryChange={setQuery} />
-        {query ? <SearchResults results={catalogSearch.data ?? fallbackResults} people={peopleSearch.data ?? []} isLoading={catalogSearch.isLoading || peopleSearch.isLoading} hasError={catalogSearch.isError} savedIds={watchlist.ids} onSave={watchlist.toggle} /> : <MovieShelf movies={recommendations} savedIds={watchlist.ids} onSave={watchlist.toggle} personalized={taste.genres.length > 0 || taste.reactions.length > 0} />}
+        <DiscoveryHero query={query} onQueryChange={setQuery} results={searchTerm ? searchResults : undefined} />
+        {!searchTerm && <MovieShelf movies={recommendations} savedIds={watchlist.ids} onSave={watchlist.toggle} personalized={personalized} />}
         <RoomCard />
         <TasteStats savedCount={watchlist.items.length} />
       </div>

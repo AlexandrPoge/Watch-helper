@@ -4,6 +4,8 @@ import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 
 import { MobileNav } from '../pages/components/MobileNav'
 import { TechBackground } from '../pages/components/TechBackground'
 import { PagesPreviewNotice } from './PagesPreviewNotice'
+import { RoomsPreviewPage } from '../pages/RoomsPreviewPage'
+import { isPagesPreview } from '../shared/config/pagesPreview'
 
 const HomePage = lazy(() => import('../pages/HomePage').then((module) => ({ default: module.HomePage })))
 const CreateRoomPage = lazy(() => import('../pages/CreateRoomPage').then((module) => ({ default: module.CreateRoomPage })))
@@ -16,7 +18,7 @@ const PersonPage = lazy(() => import('../pages/PersonPage').then((module) => ({ 
 const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
 const RandomMoviePage = lazy(() => import('../pages/RandomMoviePage').then((module) => ({ default: module.RandomMoviePage })))
 const queryClient = new QueryClient()
-const Router = import.meta.env.MODE === 'pages' ? HashRouter : BrowserRouter
+const Router = isPagesPreview ? HashRouter : BrowserRouter
 
 export function App() {
   return (
@@ -40,8 +42,8 @@ function AnimatedRoutes() {
       <Route path="/people/:catalogId" element={<PersonPage />} />
       <Route path="/random" element={<RandomMoviePage />} />
       <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/rooms/new" element={<CreateRoomPage />} />
-      <Route path="/rooms/:roomId" element={<RoomPage />} />
+      <Route path="/rooms/new" element={isPagesPreview ? <RoomsPreviewPage /> : <CreateRoomPage />} />
+      <Route path="/rooms/:roomId" element={isPagesPreview ? <RoomsPreviewPage /> : <RoomPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes></Suspense></div>
 }

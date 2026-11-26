@@ -19,4 +19,12 @@ describe('mergeCatalogItems', () => {
       sourceNames: ['TMDB', 'OMDb'],
     })])
   })
+
+  it('ranks exact original or localized titles first for searches only', () => {
+    const related = { id: 'related', title: 'Dune: Part Two', kind: 'movie' as const, match: 95, sourceNames: ['TMDB'] }
+    const exact = { ...related, id: 'exact', title: 'Дюна', originalTitle: 'Dune', match: 70 }
+    expect(mergeCatalogItems([related, exact], '  DUNE ').map(item => item.id)).toEqual(['exact', 'related'])
+    expect(mergeCatalogItems([related, exact], 'дюна').map(item => item.id)).toEqual(['exact', 'related'])
+    expect(mergeCatalogItems([related, exact]).map(item => item.id)).toEqual(['related', 'exact'])
+  })
 })

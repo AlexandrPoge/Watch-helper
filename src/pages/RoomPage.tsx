@@ -20,10 +20,15 @@ export function RoomPage() {
   const { roomId = '' } = useParams()
   const client = useQueryClient()
   const live = useLiveRoom(roomId)
-  const share = useQuery({ queryKey: ['network-share'], queryFn: getShareInfo, staleTime: 60_000 })
+  const room = live.data
+  const canInvite = room?.status === 'open' && Boolean(room.me)
+  const share = useQuery({ queryKey: ['network-share'], queryFn: getShareInfo, enabled: canInvite, staleTime: 60_000 })
   const [name, setName] = useState(getDisplayName)
   const save = (room: Room) => client.setQueryData(['room', roomId], room)
-  const join = useMutation({ mutationFn: () => joinRoom(roomId, name), onSuccess: (room) => { saveDisplayName(name); save(room) } })
+  const join = useMutation({
+    mutationFn: (guestName: string) => joinRoom(roomId, guestName),
+    onSuccess: (joinedRoom, guestName) => { saveDisplayName(guestName); save(joinedRoom) },
+  })
   const start = useMutation({ mutationFn: (setup: RoundSetup) => startRound(roomId, setup), onSuccess: save })
   const draw = useMutation({
     mutationFn: (roundId: string) => drawTieBreak(roomId, roundId),
@@ -46,7 +51,6 @@ export function RoomPage() {
       if (['ROUND_CHANGED', 'NO_ACTIVE_ROUND'].includes(error.message)) void live.refetch()
     },
   })
-  const room = live.data
   const castVote = (movieId: string, value: VoteValue) => {
     if (room?.round?.status === 'active') vote.mutate({ roundId: room.round.id, movieId, value })
   }
@@ -63,16 +67,16 @@ export function RoomPage() {
           <p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">{room.mode === 'couple' ? 'Вечер для двоих' : 'Комната для компании'}</p>
           <h1 className="mt-2 break-words text-3xl font-black sm:text-5xl">{room.title}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-slate-400">
-            {room.status === 'open' && (live.status === 'online' ? <Wifi size={16} className="text-emerald-300" /> : <WifiOff size={16} className="text-amber-300" />)}
+            {canInvite && (live.status === 'online' ? <Wifi size={16} className="text-emerald-300" /> : <WifiOff size={16} className="text-amber-300" />)}
             {room.status === 'closed' ? 'Комната закрыта' : !room.me ? 'Присоединяйся' : live.status === 'online' ? 'На связи' : live.status === 'reconnecting' ? 'Восстанавливаем связь…' : live.status === 'offline' ? 'Обновляем комнату периодически' : 'Подключаемся…'}
             {' · '}{room.members.length} участников
           </p>
         </header>
-        <div className={`grid gap-4 ${room.status === 'open' ? 'lg:grid-cols-[1.1fr_.9fr]' : ''}`}>
+        {!room.me && room.status === 'open' && <RoomJoin name={name} busy={join.isPending} onNameChange={setName} onJoin={() => join.mutate(name.trim())} />}
+        <div className={`grid gap-4 ${canInvite ? 'lg:grid-cols-[1.1fr_.9fr]' : ''}`}>
           <RoomMembers room={room} onlineIds={live.onlineIds} onRemove={(id) => kick.mutate(id)} />
-          {room.status === 'open' && <RoomInvite inviteUrl={inviteUrl} roomCode={room.id} scope={share.data?.scope} />}
+          {canInvite && <RoomInvite inviteUrl={inviteUrl} roomCode={room.id} scope={share.data?.scope} />}
         </div>
-        {!room.me && room.status === 'open' && <RoomJoin name={name} busy={join.isPending} onNameChange={setName} onJoin={() => join.mutate()} />}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{message(error.message)}</p>}
         {room.me && room.status === 'open' && <>
           <RoomRoundControls key={room.id} room={room} busy={start.isPending || cancel.isPending || close.isPending || draw.isPending}

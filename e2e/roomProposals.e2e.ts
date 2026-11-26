@@ -12,7 +12,7 @@ function watchRoomSocket(page: Page) {
 }
 
 for (const mode of ['couple', 'group'] as const) test(`participants propose films and the host runs a blind ${mode} round`, async ({ page: host, browser }) => {
-  const guestSession = await browser.newContext()
+  const guestSession = await browser.newContext({ viewport: { width: 390, height: 664 } })
   let closeRoomUrl: string | undefined
 
   try {
@@ -28,8 +28,12 @@ for (const mode of ['couple', 'group'] as const) test(`participants propose film
     const guest = await guestSession.newPage()
     const socketUpdates = watchRoomSocket(guest)
     await guest.goto(roomUrl.href)
-    await guest.getByPlaceholder('Твоё имя').fill('Участник QA')
-    await guest.getByRole('button', { name: 'Войти', exact: true }).click()
+    const join = guest.getByRole('form', { name: 'Присоединиться' })
+    await expect(join).toBeInViewport({ ratio: 1 })
+    await expect(guest.getByRole('heading', { name: 'Позови своих' })).toHaveCount(0)
+    const guestName = join.getByLabel('Твоё имя')
+    await guestName.fill('Участник QA')
+    await guestName.press('Enter')
     await guest.getByText('Предложить фильм', { exact: true }).click()
     await guest.getByRole('searchbox', { name: 'Найти фильм' }).fill('Дюна')
 
