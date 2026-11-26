@@ -7,3 +7,5 @@ backups/
 !.env.example
 *.local
 coverage
+playwright-report/
+test-results/

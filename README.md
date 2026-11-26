@@ -18,6 +18,8 @@
 
 Проверки: `npm run lint`, `npm run build`, `npm test -- --run`. Интеграционные тесты с БД: `RUN_DB_TESTS=1 npm test -- --run`. Данные комнат хранятся в Docker volume `watch_helper_pg` и переживают перезапуск API.
 
+Браузерная проверка предложений использует две независимые сессии. Установите Chromium командой `npx playwright install chromium --only-shell`, запустите приложение с рабочим каталогом и выполните `npm run test:e2e`.
+
 После установки зависимостей и настройки `.env` команда `npm run dev:stack` запускает PostgreSQL, дожидается готовности и поднимает API и интерфейс. API применяет миграции при старте.
 
 ## Production

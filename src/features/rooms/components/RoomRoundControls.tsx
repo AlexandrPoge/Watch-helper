@@ -20,6 +20,8 @@ type Props = {
 
 export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, onClose }: Props) {
   const section = useRef<HTMLElement>(null)
+  const listHeading = useRef<HTMLHeadingElement>(null)
+  const shouldFocusList = useRef(false)
   const previousRound = useRef({ id: room.round?.id, status: room.round?.status })
   const [genre, setGenre] = useState('')
   const [maxRuntime, setMaxRuntime] = useState('')
@@ -43,8 +45,16 @@ export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, on
     return () => cancelAnimationFrame(frame)
   }, [room.round?.id, room.round?.status])
 
+  useEffect(() => {
+    if (!manual || !shouldFocusList.current) return
+    shouldFocusList.current = false
+    listHeading.current?.focus({ preventScroll: true })
+    scrollToFocus(listHeading.current)
+  }, [manual, selected])
+
   const addToRound = (movie: RoomMovie) => {
     if (selected.length >= maxManualCandidates || selectedIds.has(movie.id)) return
+    shouldFocusList.current = true
     setSelected([...selected, movie])
     setSource('manual')
   }
@@ -67,7 +77,7 @@ export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, on
           <option value="manual">Свой список</option>
         </select>
       </label>
-      {manual ? <ManualMovieSelection selected={selected} onChange={setSelected} disabled={busy} />
+      {manual ? <ManualMovieSelection selected={selected} onChange={setSelected} disabled={busy} listHeadingRef={listHeading} />
         : <fieldset disabled={busy} className="mt-4 grid gap-3 sm:grid-cols-2">
           <Select title="Жанр" value={genre} options={genres} onChange={setGenre} />
           <Select title="Длительность" value={maxRuntime} options={runtimes} onChange={setMaxRuntime} />
