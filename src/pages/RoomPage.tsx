@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Wifi, WifiOff } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import type { Room, RoundSetup, VoteValue } from '../entities/room/model'
-import { cancelRound, closeRoom, getShareInfo, joinRoom, removeMember, startRound, voteForMovie } from '../features/rooms/api/roomApi'
+import { cancelRound, closeRoom, getShareInfo, joinRoom, proposeMovie, removeMember, removeProposal, startRound, voteForMovie } from '../features/rooms/api/roomApi'
 import { useLiveRoom } from '../features/rooms/useLiveRoom'
 import { getDisplayName, saveDisplayName } from '../features/rooms/roomIdentity'
 import { RoomInvite } from '../features/rooms/components/RoomInvite'
@@ -28,6 +28,13 @@ export function RoomPage() {
   const cancel = useMutation({ mutationFn: () => cancelRound(roomId), onSuccess: save })
   const close = useMutation({ mutationFn: () => closeRoom(roomId), onSuccess: save })
   const kick = useMutation({ mutationFn: (id: string) => removeMember(roomId, id), onSuccess: save })
+  const proposal = useMutation({
+    mutationKey: ['room-proposal', roomId],
+    mutationFn: ({ movieId, action }: { movieId: string; action: 'propose' | 'remove' }) =>
+      action === 'propose' ? proposeMovie(roomId, movieId) : removeProposal(roomId, movieId),
+    onSuccess: save,
+    onSettled: () => client.invalidateQueries({ queryKey: ['room', roomId] }),
+  })
   const vote = useMutation({
     mutationFn: ({ roundId, movieId, value }: { roundId: string; movieId: string; value: VoteValue }) => voteForMovie(roomId, roundId, movieId, value),
     onSuccess: save,
@@ -64,7 +71,14 @@ export function RoomPage() {
         {!room.me && room.status === 'open' && <RoomJoin name={name} busy={join.isPending} onNameChange={setName} onJoin={() => join.mutate()} />}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{message(error.message)}</p>}
         {room.me && room.status === 'open' && <>
-          <RoomRoundControls room={room} busy={start.isPending || cancel.isPending || close.isPending} onStart={(setup) => start.mutate(setup)} onCancel={() => cancel.mutate()} onClose={() => close.mutate()} />
+          <RoomRoundControls key={room.id} room={room} busy={start.isPending || cancel.isPending || close.isPending}
+            proposals={{
+              busy: proposal.isPending,
+              error: proposal.error ? proposalMessage(proposal.error.message) : undefined,
+              onPropose: movieId => proposal.mutate({ movieId, action: 'propose' }),
+              onRemove: movieId => proposal.mutate({ movieId, action: 'remove' }),
+            }}
+            onStart={(setup) => start.mutate(setup)} onCancel={() => cancel.mutate()} onClose={() => close.mutate()} />
           {room.round?.status === 'active' && (room.mode === 'couple'
             ? <PairVotingPanel round={room.round} memberCount={room.members.length} busy={vote.isPending} onVote={castVote} />
             : <VotingPanel round={room.round} busy={vote.isPending} onVote={castVote} />)}
@@ -78,6 +92,18 @@ export function RoomPage() {
       </>}
     </div>
   </main>
+}
+
+function proposalMessage(code: string) {
+  const labels: Record<string, string> = {
+    PROPOSAL_LIMIT: 'В комнате достигнут лимит предложений.',
+    PROPOSAL_NOT_FOUND: 'Это предложение уже снято или недоступно.',
+    INVALID_MOVIE_SELECTION: 'Этот фильм нельзя предложить для голосования.',
+    MANUAL_MOVIE_UNAVAILABLE: 'Этот фильм больше недоступен в каталоге.',
+    MANUAL_CATALOG_UNAVAILABLE: 'Каталог временно недоступен. Попробуй ещё раз.',
+    MEMBER_REQUIRED: 'Предлагать и снимать фильмы могут только участники комнаты.',
+  }
+  return labels[code] ?? message(code)
 }
 
 function message(code: string) {

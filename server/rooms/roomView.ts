@@ -1,6 +1,7 @@
 import { transaction } from '../db/pool'
 import { getWinners } from './roundResults'
 import { presentRound } from './blindRound'
+import { listProposals } from './proposalRepository'
 import type { MovieCandidate, RoomView, Round, VoteValue } from './types'
 
 type DbRound = { id: string; ordinal: number; status: Round['status']; genre: string | null; max_runtime: number | null; blind: boolean }
@@ -21,6 +22,9 @@ export async function getRoomView(roomId: string, guest?: string): Promise<RoomV
     }
     if (!me) return view
     const rounds = (await client.query("SELECT id,ordinal,status,genre,max_runtime,blind FROM room_rounds WHERE room_id=$1 ORDER BY ordinal DESC LIMIT 20", [roomId])).rows as DbRound[]
+    if (room.status === 'open' && !rounds.some(round => round.status === 'active')) {
+      view.proposals = await listProposals(client, roomId)
+    }
     if (!rounds.length) return view
     const roundIds = rounds.map((item) => item.id)
     const candidates = (await client.query('SELECT round_id,movie_id,vote_id,position,title,year,poster_url,rating,overview FROM round_candidates WHERE round_id=ANY($1) ORDER BY position', [roundIds])).rows

@@ -88,15 +88,37 @@ run('room HTTP and live events', () => {
     const guestSocket = await connect(guestCookie)
     const path = `/api/rooms/${roomId}/rounds`
     const candidateIds = movies.map(movie => movie.id)
+    const proposals = `/api/rooms/${roomId}/proposals`
+    const proposal = { movieId: candidateIds[0] }
+    expect((await request(proposals, 'POST', '', proposal)).response.status).toBe(403)
+    const proposed = new Promise<void>(resolve => hostSocket.once('room:changed', resolve))
+    const [added, duplicate] = await Promise.all([
+      request(proposals, 'POST', guestCookie, proposal),
+      request(proposals, 'POST', guestCookie, proposal),
+    ])
+    expect(added.response.status).toBe(200)
+    expect(duplicate.data.room.proposals).toHaveLength(1)
+    await proposed
+    expect((await request(`/api/rooms/${roomId}`, 'GET', hostCookie)).data.room.proposals[0].memberName).toBe('Гость')
+    expect((await request(`/api/rooms/${roomId}`)).data.room.proposals).toBeUndefined()
+    await request(proposals, 'POST', hostCookie, { movieId: candidateIds[1] })
+    const hostProposal = `${proposals}/${encodeURIComponent(candidateIds[1])}`
+    expect((await request(hostProposal, 'DELETE', guestCookie)).response.status).toBe(404)
+    expect((await request(hostProposal, 'DELETE', hostCookie)).data.room.proposals).toHaveLength(1)
     expect((await request(path, 'POST', guestCookie, { candidateIds })).response.status).toBe(403)
     expect((await request(path, 'POST', hostCookie, { candidateIds: [candidateIds[0], candidateIds[0]] })).response.status).toBe(400)
     expect((await request(path, 'POST', hostCookie, { candidateIds: [candidateIds[0], 'tmdb:movie:999'] })).response.status).toBe(422)
+    vi.mocked(getMovieDetails).mockClear()
     const changed = new Promise<void>((resolve) => guestSocket.once('room:changed', resolve))
     const started = await request(path, 'POST', hostCookie, { candidateIds, blind: true, maxRuntime: 90 })
     expect(started.response.status).toBe(200)
+    expect(getMovieDetails).toHaveBeenCalledTimes(1)
+    expect(getMovieDetails).toHaveBeenCalledWith(candidateIds[1])
     const round = started.data.room.round
     const roundId = round.id
     expect(round.candidates).toHaveLength(2)
+    expect(started.data.room.proposals).toBeUndefined()
+    expect((await request(proposals, 'POST', guestCookie, proposal)).response.status).toBe(409)
     expect(round.mood).toEqual({})
     expect(JSON.stringify(round)).not.toContain(movies[0].id)
     expect(JSON.stringify(round)).not.toContain(movies[1].title)
@@ -120,6 +142,7 @@ run('room HTTP and live events', () => {
     const revoked = new Promise<void>((resolve) => guestSocket.once('room:revoked', resolve))
     const removed = await request(`/api/rooms/${roomId}/members/${joined.data.room.me.id}`, 'DELETE', hostCookie)
     expect(removed.response.status).toBe(200)
+    expect(removed.data.room.proposals).toEqual([])
     await revoked
     expect((await request('/api/rooms', 'GET', guestCookie)).data.items).toEqual([])
     expect((await request(`/api/rooms/${roomId}`, 'GET', guestCookie)).data.room.me).toBeUndefined()

@@ -1,17 +1,19 @@
 import { Router, type Request, type Response } from 'express'
 import { createGuest, readGuest } from './guestSession'
 import { roomError, RoomError } from './roomErrors'
-import { closeRoom, createRoom, joinRoom, recentRooms, removeMember, requireHost } from './roomRepository'
+import { closeRoom, createRoom, getMembership, joinRoom, recentRooms, removeMember, requireHost } from './roomRepository'
 import { cancelRound, startRound, vote } from './roundRepository'
 import { getRoomView } from './roomView'
 import { evictMember, notifyRoom } from './socketHub'
-import { resolveRoundCandidates } from './roundCandidates'
+import { isCandidateId, resolveMovieCandidate, resolveRoundCandidates } from './roundCandidates'
+import { addProposal, proposedMovies, removeProposal } from './proposalRepository'
 import type { RoomMode, RoundSetup, VoteValue } from './types'
 
 export const roomRouter = Router()
-type Handler = (request: Request<{ roomId: string; memberId: string }>, response: Response) => Promise<void>
+type RoomParams = { roomId: string; memberId: string; movieId: string }
+type Handler = (request: Request<RoomParams>, response: Response) => Promise<void>
 const handle = (fn: Handler) => (request: Request, response: Response) => {
-  void fn(request as Request<{ roomId: string; memberId: string }>, response).catch((error: unknown) => {
+  void fn(request as Request<RoomParams>, response).catch((error: unknown) => {
     const failure = roomError(error)
     if (failure.status === 500) console.error('Room request failed', error)
     response.status(failure.status).json({ message: failure.message })
@@ -59,7 +61,8 @@ roomRouter.post('/api/rooms/:roomId/rounds', handle(async (request, response) =>
   const setup = selection === undefined ? { ...mood, blind } : { blind }
   const guest = readGuest(request)
   await requireHost(request.params.roomId, guest)
-  const candidates = await resolveRoundCandidates(setup, selection)
+  const proposed = selection === undefined ? [] : await proposedMovies(request.params.roomId)
+  const candidates = await resolveRoundCandidates(setup, selection, proposed)
   await startRound(request.params.roomId, guest, setup, candidates)
   notifyRoom(request.params.roomId)
   response.json({ room: await view(request.params.roomId, guest) })
@@ -97,6 +100,26 @@ roomRouter.get('/api/rooms/:roomId/history', handle(async (request, response) =>
   const room = await view(request.params.roomId, readGuest(request))
   if (!room.me) throw new RoomError('MEMBER_REQUIRED', 403)
   response.json({ items: room.history })
+}))
+
+roomRouter.post('/api/rooms/:roomId/proposals', handle(async (request, response) => {
+  const { roomId } = request.params
+  const guest = readGuest(request)
+  const movieId: unknown = request.body?.movieId
+  if (!isCandidateId(movieId)) throw new RoomError('INVALID_MOVIE_SELECTION')
+  if (!await getMembership(roomId, guest)) throw new RoomError('MEMBER_REQUIRED', 403)
+  await addProposal(roomId, guest, await resolveMovieCandidate(movieId))
+  notifyRoom(roomId)
+  response.json({ room: await view(roomId, guest) })
+}))
+
+roomRouter.delete('/api/rooms/:roomId/proposals/:movieId', handle(async (request, response) => {
+  const { roomId, movieId } = request.params
+  const guest = readGuest(request)
+  if (!isCandidateId(movieId)) throw new RoomError('INVALID_MOVIE_SELECTION')
+  await removeProposal(roomId, guest, movieId)
+  notifyRoom(roomId)
+  response.json({ room: await view(roomId, guest) })
 }))
 
 function cleanText(value: unknown, max: number) {

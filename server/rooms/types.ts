@@ -3,6 +3,7 @@ export type VoteValue = 'up' | 'skip'
 export type Mood = { genre?: string; maxRuntime?: number }
 export type RoundSetup = Mood & { blind?: boolean }
 export type MovieCandidate = { id: string; title: string; year: number; posterUrl: string; rating?: number; overview?: string }
+export type RoomProposal = { movie: MovieCandidate; memberId: string; memberName: string }
 export type Member = { id: string; name: string; isHost: boolean }
 export type Round = {
   id: string
@@ -24,6 +25,7 @@ export type RoomView = {
   status: 'open' | 'closed'
   me?: { id: string; isHost: boolean }
   members: Member[]
+  proposals?: RoomProposal[]
   round?: Round
   history: Pick<Round, 'id' | 'ordinal' | 'status' | 'blind' | 'winners' | 'candidates'>[]
 }

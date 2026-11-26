@@ -68,6 +68,7 @@ export async function removeMember(roomId: string, memberId: string, guest?: str
     if (active.rowCount) throw new RoomError('ROUND_ACTIVE', 409)
     const result = await client.query('UPDATE room_members SET removed_at=now() WHERE room_id=$1 AND id=$2 AND is_host=false AND removed_at IS NULL RETURNING id', [roomId, memberId])
     if (!result.rowCount) throw new RoomError('MEMBER_NOT_FOUND', 404)
+    await client.query('DELETE FROM room_proposals WHERE room_id=$1 AND member_id=$2', [roomId, memberId])
   })
 }
 
