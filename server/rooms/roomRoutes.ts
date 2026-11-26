@@ -7,10 +7,12 @@ import { getRoomView } from './roomView'
 import { evictMember, notifyRoom } from './socketHub'
 import { isCandidateId, resolveMovieCandidate, resolveRoundCandidates } from './roundCandidates'
 import { addProposal, proposedMovies, removeProposal } from './proposalRepository'
+import { drawTieBreak } from './tieBreakRepository'
 import type { RoomMode, RoundSetup, VoteValue } from './types'
 
 export const roomRouter = Router()
-type RoomParams = { roomId: string; memberId: string; movieId: string }
+const uuidPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
+type RoomParams = { roomId: string; memberId: string; movieId: string; roundId: string }
 type Handler = (request: Request<RoomParams>, response: Response) => Promise<void>
 const handle = (fn: Handler) => (request: Request, response: Response) => {
   void fn(request as Request<RoomParams>, response).catch((error: unknown) => {
@@ -71,10 +73,19 @@ roomRouter.post('/api/rooms/:roomId/rounds', handle(async (request, response) =>
 roomRouter.post('/api/rooms/:roomId/votes', handle(async (request, response) => {
   const { movieId, value, roundId } = request.body ?? {}
   if (typeof movieId !== 'string' || !['up', 'skip'].includes(value)) throw new RoomError('INVALID_VOTE')
-  if (roundId !== undefined && (typeof roundId !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(roundId))) throw new RoomError('INVALID_VOTE')
+  if (roundId !== undefined && (typeof roundId !== 'string' || !uuidPattern.test(roundId))) throw new RoomError('INVALID_VOTE')
   await vote(request.params.roomId, readGuest(request), movieId, value as VoteValue, roundId)
   notifyRoom(request.params.roomId)
   response.json({ room: await view(request.params.roomId, readGuest(request)) })
+}))
+
+roomRouter.post('/api/rooms/:roomId/rounds/:roundId/tie-break', handle(async (request, response) => {
+  const { roomId, roundId } = request.params
+  if (!uuidPattern.test(roundId)) throw new RoomError('INVALID_ROUND')
+  const guest = readGuest(request)
+  await drawTieBreak(roomId, roundId, guest)
+  notifyRoom(roomId)
+  response.json({ room: await view(roomId, guest) })
 }))
 
 roomRouter.delete('/api/rooms/:roomId/rounds/current', handle(async (request, response) => {

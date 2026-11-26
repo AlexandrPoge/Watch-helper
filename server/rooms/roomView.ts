@@ -4,7 +4,7 @@ import { presentRound } from './blindRound'
 import { listProposals } from './proposalRepository'
 import type { MovieCandidate, RoomView, Round, VoteValue } from './types'
 
-type DbRound = { id: string; ordinal: number; status: Round['status']; genre: string | null; max_runtime: number | null; blind: boolean }
+type DbRound = { id: string; ordinal: number; status: Round['status']; genre: string | null; max_runtime: number | null; blind: boolean; drawn_movie_id: string | null }
 type DbVote = { round_id: string; member_id: string; movie_id: string; value: VoteValue }
 
 export async function getRoomView(roomId: string, guest?: string): Promise<RoomView | undefined> {
@@ -21,7 +21,11 @@ export async function getRoomView(roomId: string, guest?: string): Promise<RoomV
       history: [],
     }
     if (!me) return view
-    const rounds = (await client.query("SELECT id,ordinal,status,genre,max_runtime,blind FROM room_rounds WHERE room_id=$1 ORDER BY ordinal DESC LIMIT 20", [roomId])).rows as DbRound[]
+    const { rows: rounds } = await client.query<DbRound>(`
+      SELECT r.id,r.ordinal,r.status,r.genre,r.max_runtime,r.blind,t.movie_id AS drawn_movie_id
+      FROM room_rounds r LEFT JOIN round_tie_breaks t ON t.round_id=r.id
+      WHERE r.room_id=$1 ORDER BY r.ordinal DESC LIMIT 20
+    `, [roomId])
     if (room.status === 'open' && !rounds.some(round => round.status === 'active')) {
       view.proposals = await listProposals(client, roomId)
     }
@@ -34,20 +38,26 @@ export async function getRoomView(roomId: string, guest?: string): Promise<RoomV
       const movies: MovieCandidate[] = candidates.filter((item) => item.round_id === round.id).map((item) => ({ id: item.movie_id, title: item.title, year: item.year, posterUrl: item.poster_url, rating: item.rating == null ? undefined : Number(item.rating), overview: item.overview ?? undefined }))
       const roundVotes = votes.filter((item) => item.round_id === round.id)
       const memberIds = participants.filter((item) => item.round_id === round.id).map((item) => item.member_id as string)
+      const tieBreakWinnerId = round.status === 'completed' ? round.drawn_movie_id ?? undefined : undefined
+      const leaders = round.status === 'completed' ? getWinners(room.mode, movies.map(movie => movie.id), memberIds, roundVotes) : []
       const details: Round = {
         id: round.id, ordinal: round.ordinal, status: round.status, blind: round.blind,
         mood: { genre: round.genre ?? undefined, maxRuntime: round.max_runtime ?? undefined },
         candidates: movies,
         myVotes: roundVotes.filter((vote) => vote.member_id === me.id).map((vote) => ({ movieId: vote.movie_id, value: vote.value })),
         voteCount: roundVotes.length, totalVotes: memberIds.length * movies.length,
-        winners: round.status === 'completed' ? getWinners(room.mode, movies.map((movie) => movie.id), memberIds, roundVotes) : [],
+        winners: leaders, tieBreakWinnerId,
         eligible: memberIds.includes(me.id),
       }
       const voteIds = new Map(candidates.filter((item) => item.round_id === round.id).map((item) => [item.movie_id as string, item.vote_id as string]))
       return presentRound(details, voteIds)
     })
     view.round = details.find((round) => round.status === 'active') ?? details.find((round) => round.status === 'completed')
-    view.history = details.filter((round) => round.status === 'completed').map(({ id, ordinal, status, blind, winners, candidates }) => ({ id, ordinal, status, blind, winners, candidates }))
+    const latest = details[0]
+    if (room.status === 'open' && room.mode === 'group' && latest.status === 'completed' && latest.winners.length > 1 && !latest.tieBreakWinnerId) {
+      view.tieBreakAvailable = true
+    }
+    view.history = details.filter((round) => round.status === 'completed').map(({ id, ordinal, status, blind, winners, candidates, tieBreakWinnerId }) => ({ id, ordinal, status, blind, winners, candidates, tieBreakWinnerId }))
     return view
   })
 }

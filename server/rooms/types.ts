@@ -16,6 +16,7 @@ export type Round = {
   voteCount: number
   totalVotes: number
   winners: string[]
+  tieBreakWinnerId?: string
   eligible: boolean
 }
 export type RoomView = {
@@ -27,5 +28,6 @@ export type RoomView = {
   members: Member[]
   proposals?: RoomProposal[]
   round?: Round
-  history: Pick<Round, 'id' | 'ordinal' | 'status' | 'blind' | 'winners' | 'candidates'>[]
+  tieBreakAvailable?: boolean
+  history: Pick<Round, 'id' | 'ordinal' | 'status' | 'blind' | 'winners' | 'candidates' | 'tieBreakWinnerId'>[]
 }

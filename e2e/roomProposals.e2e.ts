@@ -1,11 +1,22 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-test('participants propose films and the host starts a blind round', async ({ page: host, browser }) => {
+function watchRoomSocket(page: Page) {
+  let updates = 0
+  page.on('websocket', socket => {
+    if (!socket.url().includes('/socket.io/')) return
+    socket.on('framereceived', ({ payload }) => {
+      if (typeof payload === 'string' && payload.startsWith('42["room:changed"')) updates++
+    })
+  })
+  return () => updates
+}
+
+for (const mode of ['couple', 'group'] as const) test(`participants propose films and the host runs a blind ${mode} round`, async ({ page: host, browser }) => {
   const guestSession = await browser.newContext()
   let closeRoomUrl: string | undefined
 
   try {
-    await host.goto('/rooms/new?mode=couple')
+    await host.goto(`/rooms/new?mode=${mode}`)
     await host.getByLabel('Название комнаты').fill('Браузерная проверка предложений')
     await host.getByLabel('Как тебя представить?').fill('Ведущий QA')
     await host.getByRole('button', { name: 'Создать комнату', exact: true }).click()
@@ -15,6 +26,7 @@ test('participants propose films and the host starts a blind round', async ({ pa
     await expect(host.getByText(/На связи/)).toBeVisible()
 
     const guest = await guestSession.newPage()
+    const socketUpdates = watchRoomSocket(guest)
     await guest.goto(roomUrl.href)
     await guest.getByPlaceholder('Твоё имя').fill('Участник QA')
     await guest.getByRole('button', { name: 'Войти', exact: true }).click()
@@ -38,7 +50,35 @@ test('participants propose films and the host starts a blind round', async ({ pa
     for (const participant of [host, guest]) {
       await expect(participant.getByRole('heading', { name: /Раунд 1 · Слепой сеанс/ })).toBeVisible()
       await expect(participant.getByRole('heading', { name: 'Предложения фильмов', exact: true })).toHaveCount(0)
-      await expect(participant.getByRole('heading', { name: 'Тайный фильм №1', exact: true })).toBeVisible()
+      await expect(participant.getByText('Тайный фильм №1', { exact: true })).toBeVisible()
+    }
+    if (mode === 'group') {
+      for (const [index, participant] of [host, guest].entries()) {
+        const ballot = participant.getByRole('article').filter({ hasText: /Тайный фильм/ })
+        await ballot.nth(index).getByRole('button', { name: 'Нравится' }).click()
+        await ballot.nth(1 - index).getByRole('button', { name: 'Пропустить' }).click()
+      }
+      for (const participant of [host, guest]) {
+        await expect(participant.getByRole('heading', { name: 'У нас ничья!', exact: true })).toBeVisible()
+      }
+      const draw = { name: 'Разрешить ничью жребием', exact: true }
+      await expect(guest.getByRole('button', draw)).toHaveCount(0)
+      await expect(guest.getByText('Ведущий может бросить жребий.')).toBeVisible()
+      const updatesBeforeDraw = socketUpdates()
+      await host.getByRole('button', draw).click()
+      if (process.env.WATCH_HELPER_REQUIRE_WEBSOCKET === '1') {
+        await expect.poll(socketUpdates).toBeGreaterThan(updatesBeforeDraw)
+      }
+      const history = (participant: typeof host) => participant.getByRole('region', { name: 'История выбора' }).getByRole('link')
+      for (const participant of [host, guest]) {
+        await expect(participant.getByText('Победитель выбран жеребьёвкой')).toBeVisible()
+        await expect(history(participant)).toHaveCount(1)
+        await expect(participant.getByText(/^Лидеры голосования/)).toContainText('Дюна: Часть вторая')
+      }
+      const winner = await history(host).getAttribute('href')
+      await guest.reload()
+      await expect(guest.getByText(/На связи/)).toBeVisible()
+      await expect(history(guest)).toHaveAttribute('href', winner ?? '')
     }
   } finally {
     if (closeRoomUrl) await host.request.post(closeRoomUrl)

@@ -16,9 +16,11 @@ type Props = {
   onStart: (setup: RoundSetup) => void
   onCancel: () => void
   onClose: () => void
+  onDraw: (roundId: string) => void
+  drawing: boolean
 }
 
-export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, onClose }: Props) {
+export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, onClose, onDraw, drawing }: Props) {
   const section = useRef<HTMLElement>(null)
   const listHeading = useRef<HTMLHeadingElement>(null)
   const shouldFocusList = useRef(false)
@@ -31,6 +33,7 @@ export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, on
   const selectedIds = new Set(selected.map(movie => movie.id))
   const active = room.round?.status === 'active'
   const isHost = Boolean(room.me?.isHost)
+  const completed = room.round?.status === 'completed' ? room.round : undefined
   const waiting = room.mode === 'couple' && room.members.length < 2
   const manual = source === 'manual'
   const start = () => {
@@ -60,7 +63,8 @@ export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, on
   }
 
   return <><section ref={section} className="mt-5 scroll-mt-24 rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-6">
-    {room.round?.status === 'completed' && <RoomResult round={room.round} />}
+    {completed && <RoomResult round={completed} disabled={busy || proposals.busy} drawing={drawing}
+      onDraw={isHost && room.tieBreakAvailable ? () => onDraw(completed.id) : undefined} />}
     {active ? <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-xl font-black">Раунд {room.round?.ordinal}{room.round?.blind ? ' · Слепой сеанс' : ''}</h2>
@@ -89,7 +93,7 @@ export function RoomRoundControls({ room, busy, proposals, onStart, onCancel, on
       {manual && blind && <p className="mt-2 text-xs text-slate-400">Ты знаешь список, но порядок фильмов будет случайным.</p>}
       <button disabled={busy || proposals.busy || waiting || (manual && selected.length < minManualCandidates)} onClick={start} className="mt-5 rounded-xl bg-violet-500 px-5 py-3 text-sm font-black hover:bg-violet-400 disabled:opacity-50">{busy ? 'Подготавливаем…' : room.round ? 'Новый раунд' : 'Начать выбор'}</button>
       {waiting && <p className="mt-2 text-sm text-amber-200">Ожидаем участника — отправь партнёру ссылку выше.</p>}
-    </> : <p className="text-sm text-violet-200">Ждём, пока ведущий начнёт раунд.</p>}
+    </> : <p className="text-sm text-violet-200">{room.tieBreakAvailable ? 'Ведущий может бросить жребий.' : 'Ждём, пока ведущий начнёт раунд.'}</p>}
     {isHost && <button disabled={busy || proposals.busy} onClick={onClose} className="mt-5 text-xs font-semibold text-slate-500 hover:text-rose-300">Закрыть комнату</button>}
   </section>
     <RoomProposals {...proposals} room={room} selectedIds={selectedIds} busy={busy || proposals.busy} onAddToRound={addToRound} />

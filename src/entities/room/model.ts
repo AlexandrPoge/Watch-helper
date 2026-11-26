@@ -16,6 +16,7 @@ export type RoomRound = {
   voteCount: number
   totalVotes: number
   winners: string[]
+  tieBreakWinnerId?: string
   eligible: boolean
 }
 export type Room = {
@@ -27,6 +28,12 @@ export type Room = {
   members: RoomMember[]
   proposals?: RoomProposal[]
   round?: RoomRound
-  history: Pick<RoomRound, 'id' | 'ordinal' | 'status' | 'blind' | 'winners' | 'candidates'>[]
+  tieBreakAvailable?: boolean
+  history: Pick<RoomRound, 'id' | 'ordinal' | 'status' | 'blind' | 'winners' | 'candidates' | 'tieBreakWinnerId'>[]
 }
 export type CreateRoomInput = { title: string; mode: RoomMode; hostName: string }
+
+export function getRoundResultMovies(round: Pick<RoomRound, 'candidates' | 'winners' | 'tieBreakWinnerId'>) {
+  const ids = round.tieBreakWinnerId ? [round.tieBreakWinnerId] : round.winners
+  return round.candidates.filter(movie => ids.includes(movie.id))
+}

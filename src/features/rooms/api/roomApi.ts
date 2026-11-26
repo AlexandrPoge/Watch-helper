@@ -4,6 +4,7 @@ export const createRoom = (input: CreateRoomInput) => requestRoom('/api/rooms', 
 export const getRoom = (id: string) => requestRoom(`/api/rooms/${id}`)
 export const joinRoom = (id: string, name: string) => requestRoom(`/api/rooms/${id}/join`, { method: 'POST', body: JSON.stringify({ name }) })
 export const startRound = (id: string, setup: RoundSetup) => requestRoom(`/api/rooms/${id}/rounds`, { method: 'POST', body: JSON.stringify(setup) })
+export const drawTieBreak = (id: string, roundId: string) => requestRoom(`/api/rooms/${id}/rounds/${roundId}/tie-break`, { method: 'POST' })
 export const cancelRound = (id: string) => requestRoom(`/api/rooms/${id}/rounds/current`, { method: 'DELETE' })
 export const closeRoom = (id: string) => requestRoom(`/api/rooms/${id}/close`, { method: 'POST' })
 export const removeMember = (id: string, memberId: string) => requestRoom(`/api/rooms/${id}/members/${memberId}`, { method: 'DELETE' })

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Wifi, WifiOff } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import type { Room, RoundSetup, VoteValue } from '../entities/room/model'
-import { cancelRound, closeRoom, getShareInfo, joinRoom, proposeMovie, removeMember, removeProposal, startRound, voteForMovie } from '../features/rooms/api/roomApi'
+import { cancelRound, closeRoom, drawTieBreak, getShareInfo, joinRoom, proposeMovie, removeMember, removeProposal, startRound, voteForMovie } from '../features/rooms/api/roomApi'
 import { useLiveRoom } from '../features/rooms/useLiveRoom'
 import { getDisplayName, saveDisplayName } from '../features/rooms/roomIdentity'
 import { RoomInvite } from '../features/rooms/components/RoomInvite'
@@ -25,6 +25,10 @@ export function RoomPage() {
   const save = (room: Room) => client.setQueryData(['room', roomId], room)
   const join = useMutation({ mutationFn: () => joinRoom(roomId, name), onSuccess: (room) => { saveDisplayName(name); save(room) } })
   const start = useMutation({ mutationFn: (setup: RoundSetup) => startRound(roomId, setup), onSuccess: save })
+  const draw = useMutation({
+    mutationFn: (roundId: string) => drawTieBreak(roomId, roundId),
+    onSettled: () => client.invalidateQueries({ queryKey: ['room', roomId] }),
+  })
   const cancel = useMutation({ mutationFn: () => cancelRound(roomId), onSuccess: save })
   const close = useMutation({ mutationFn: () => closeRoom(roomId), onSuccess: save })
   const kick = useMutation({ mutationFn: (id: string) => removeMember(roomId, id), onSuccess: save })
@@ -48,7 +52,7 @@ export function RoomPage() {
   }
   const pairVoting = room?.status === 'open' && room.mode === 'couple' && room.round?.status === 'active' && Boolean(room.me)
   const inviteUrl = `${share.data?.urls[0] ?? window.location.origin}/rooms/${roomId}`
-  const error = [join, start, cancel, close, kick, vote].find((item) => item.isError)?.error
+  const error = [join, start, cancel, close, kick, vote, draw].find((item) => item.isError)?.error
   return <main className="min-h-screen text-white">
     <AppHeader />
     <div className={`mx-auto max-w-5xl px-4 py-8 sm:px-6 xl:px-8 ${pairVoting ? 'pb-72' : 'pb-28'}`}>
@@ -71,7 +75,8 @@ export function RoomPage() {
         {!room.me && room.status === 'open' && <RoomJoin name={name} busy={join.isPending} onNameChange={setName} onJoin={() => join.mutate()} />}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{message(error.message)}</p>}
         {room.me && room.status === 'open' && <>
-          <RoomRoundControls key={room.id} room={room} busy={start.isPending || cancel.isPending || close.isPending}
+          <RoomRoundControls key={room.id} room={room} busy={start.isPending || cancel.isPending || close.isPending || draw.isPending}
+            drawing={draw.isPending} onDraw={roundId => draw.mutate(roundId)}
             proposals={{
               busy: proposal.isPending,
               error: proposal.error ? proposalMessage(proposal.error.message) : undefined,
@@ -108,6 +113,7 @@ function proposalMessage(code: string) {
 
 function message(code: string) {
   if (code === 'ROUND_CHANGED' || code === 'NO_ACTIVE_ROUND') return 'Раунд уже изменился. Посмотри текущее состояние комнаты.'
+  if (code === 'TIE_BREAK_UNAVAILABLE') return 'Жеребьёвка доступна, когда несколько фильмов набрали поровну голосов.'
   if (code === 'INVALID_MOVIE_SELECTION') return 'Проверь список: нужны разные фильмы из каталога.'
   if (code === 'MANUAL_MOVIE_UNAVAILABLE') return 'Один из фильмов больше недоступен в каталоге. Замени его или выбери автоматический подбор.'
   if (code === 'MANUAL_CATALOG_UNAVAILABLE') return 'Каталог временно недоступен. Твой список сохранён до выхода из комнаты. Попробуй ещё раз.'
